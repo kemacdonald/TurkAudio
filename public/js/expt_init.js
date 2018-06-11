@@ -11,7 +11,7 @@ var order_number_obj, list_number, list_of_orders,
 // we wrap the init code in document.ready
 // so that the ajax call only fires once when the page loads
 $(document).ready(function(){
-  generate_list_of_orders();
+  generate_list_of_orders_ajax();
   // Initialize progress bar and show the first slide of the experiment
   $(".progress").progressbar();
   $(".progress").progressbar( "option", "max", n_orders_in_list);

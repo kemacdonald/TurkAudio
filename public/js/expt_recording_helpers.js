@@ -1,4 +1,4 @@
-// HELPER FUNCTIONS FOR RECORDING AUDIO ON AMT 
+// HELPER FUNCTIONS FOR RECORDING AUDIO ON AMT
 
 // construct the audio file name that gets uploaded to AWS
 function make_file_name(current_order_key) {
@@ -11,7 +11,6 @@ function init_audio_recording() {
     recorder = new MediaRecorder(stream);
     // listen to dataavailable, which gets triggered whenever we have an audio blob available
     recorder.addEventListener('dataavailable', onRecordingReady);
-    //
     setTimeout(function(){showSlide('order_slide');}, 1000);
   });
 }
@@ -51,5 +50,5 @@ function uploadBlob(blob) {
   formData.append('video-blob', fileObject);
   formData.append('video-filename', fileObject.name);
   // send the form to the server
-  upload_audio(formData);
+  upload_audio_ajax(formData);
 }

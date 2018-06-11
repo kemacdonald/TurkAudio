@@ -1,3 +1,33 @@
+// BSD 3-Clause License
+//
+// Copyright (c) 2018, Long Ouyang
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// * Redistributions of source code must retain the above copyright notice, this
+//   list of conditions and the following disclaimer.
+//
+// * Redistributions in binary form must reproduce the above copyright notice,
+//   this list of conditions and the following disclaimer in the documentation
+//   and/or other materials provided with the distribution.
+//
+// * Neither the name of the copyright holder nor the names of its
+//   contributors may be used to endorse or promote products derived from
+//   this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 // Bundle in Crockford's JSON2.js
 var JSON;JSON||(JSON={});
 (function(){function k(a){return a<10?"0"+a:a}function o(a){p.lastIndex=0;return p.test(a)?'"'+a.replace(p,function(a){var c=r[a];return typeof c==="string"?c:"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})+'"':'"'+a+'"'}function l(a,j){var c,d,h,m,g=e,f,b=j[a];b&&typeof b==="object"&&typeof b.toJSON==="function"&&(b=b.toJSON(a));typeof i==="function"&&(b=i.call(j,a,b));switch(typeof b){case "string":return o(b);case "number":return isFinite(b)?String(b):"null";case "boolean":case "null":return String(b);case "object":if(!b)return"null";
@@ -24,10 +54,10 @@ turk = turk || {};
       return res;
     };
   }
-  
+
   var hopUndefined = !Object.prototype.hasOwnProperty,
       showPreviewWarning = true;
-  
+
   // We can disable the previewWarning by including this script with "nowarn" in the script url
   // (i.e. mmturkey.js?nowarn). This doesn't work in FF 1.5, which doesn't define document.scripts
   if (document.scripts) {
@@ -39,7 +69,7 @@ turk = turk || {};
       }
     }
   }
-  
+
   var param = function(url, name ) {
     name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
     var regexS = "[\\?&]"+name+"=([^&#]*)";
@@ -47,7 +77,7 @@ turk = turk || {};
     var results = regex.exec( url );
     return ( results == null ) ? "" : results[1];
   }
-  
+
   // Give an HTML representation of an object
   var htmlify = function(obj) {
     if (obj instanceof Array) {
@@ -69,7 +99,7 @@ turk = turk || {};
       return obj.toString();
     }
   };
-  
+
   var addFormData = function(form,key,value) {
     var input = document.createElement('input');
     input.type = 'hidden';
@@ -81,7 +111,7 @@ turk = turk || {};
   var url = window.location.href,
       src = param(url, "assignmentId") ? url : document.referrer,
       keys = ["assignmentId","hitId","workerId","turkSubmitTo"];
-  
+
   keys.map(function(key) {
     turk[key] = unescape(param(src, key));
   });
@@ -95,7 +125,7 @@ turk = turk || {};
         turkSubmitTo = turk.turkSubmitTo,
         rawData = {},
         form = document.createElement('form');
-   
+
     document.body.appendChild(form);
 
     if (assignmentId) {
@@ -130,7 +160,7 @@ turk = turk || {};
     form.method = "POST";
     form.submit();
   }
-  
+
   // simulate $(document).ready() to show the preview warning
   if (showPreviewWarning && turk.previewMode) {
     var intervalHandle = setInterval(function() {
@@ -138,7 +168,7 @@ turk = turk || {};
         var div = document.createElement('div'), style = div.style;
         style.backgroundColor = "gray";
         style.color = "white";
-        
+
         style.position = "absolute";
         style.margin = "0";
         style.padding = "0";
@@ -150,18 +180,18 @@ turk = turk || {};
         style.fontFamily = "arial";
         style.fontSize = "24px";
         style.fontWeight = "bold";
-        
+
         style.opacity = "0.5";
         style.filter = "alpha(opacity = 50)";
-        
+
         div.innerHTML = "PREVIEW MODE: CLICK \"ACCEPT\" ABOVE TO START THIS HIT";
-        
+
         document.body.appendChild(div);
         clearInterval(intervalHandle);
       } catch(e) {
-        
+
       }
     },20);
   }
-  
+
 })();

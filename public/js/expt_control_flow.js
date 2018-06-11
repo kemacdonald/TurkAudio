@@ -50,8 +50,8 @@ function onRTCready() {
       $('#example_audio').trigger('pause'); // pause any audio that might still be playing
       $(".progress").attr("style", "visibility: visible"); // make the progress bar visible
       if(!_.isEmpty(turk.workerId) & !turk.previewMode){
-        create_upload_dir(list_number); // create an upload directory if this is a turker
-        remove_list_number(list_number); // remove the oreder list from the pool
+        create_upload_dir_ajax(list_number); // create an upload directory if this is a turker
+        remove_list_number_ajax(list_number); // remove the oreder list from the pool
       }
       init_order(); // creates an order (see expt_helpers.js)
       bind_keyboard_events(); // binds the left and right arrows to control the recorder
@@ -77,7 +77,7 @@ function onRTCready() {
         exp.age = document.getElementById("age").value;
         exp.gender = document.getElementById("gender").value;
         showSlide("finished");
-        end_and_submit_exp(); // send data to server
+        end_and_submit_exp_ajax(); // send data to server
       }
     }
   };

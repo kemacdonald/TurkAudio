@@ -1,7 +1,7 @@
 //HELPER FUNCTIONS FOR CLIENT-SERVER COMMUNICATION DURING THE EXPERIMENT
 
 // Removes current list number from the pool of possible list numbers
-function remove_list_number(list_number) {
+function remove_list_number_ajax(list_number) {
   $.ajax({
     type: "POST",
     contentType: "application/json; charset=utf-8",
@@ -11,7 +11,7 @@ function remove_list_number(list_number) {
   });
 }
 
-function generate_list_of_orders() {
+function generate_list_of_orders_ajax() {
   $.ajax({
     dataType: "json",
     url: 'order_list_generator.json',
@@ -27,13 +27,13 @@ function generate_list_of_orders() {
         console.log('sampling list number randomly');
         list_number = random(n_orders_list_min, n_orders_list_max).toString();
       }
-      get_list_of_orders(list_number);
+      get_list_of_orders_ajax(list_number);
     }
   });
 }
 
 // Function to make the AJAX request to get the list of orders for this turker
-function get_list_of_orders(list_number) {
+function get_list_of_orders_ajax(list_number) {
   var order_url = "order_lists/person" + list_number + ".json";
   $.ajax({
     dataType: "json",
@@ -51,7 +51,7 @@ function get_list_of_orders(list_number) {
   });
 };
 
-function create_upload_dir(list_number) {
+function create_upload_dir_ajax(list_number) {
   person_key = "person"+list_number
   $.ajax({
     dataType: "json",
@@ -63,7 +63,7 @@ function create_upload_dir(list_number) {
 }
 
 // upload audio blob to server
-function upload_audio(formData) {
+function upload_audio_ajax(formData) {
   $.ajax({
     url: 'endpoint',
     type: "POST",
