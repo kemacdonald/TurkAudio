@@ -1,3 +1,4 @@
 utils/
 conf/
 *.conf
+.DS_Store
