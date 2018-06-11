@@ -80,7 +80,7 @@ function upload_audio_ajax(formData) {
   });
 }
 
-function end_and_submit_exp() {
+function end_and_submit_exp_ajax() {
   exp.end_time = new Date();
   if(!_.isEmpty(exp.start_time)) {
     exp.completion_time = exp.end_time.getTime() - exp.start_time.getTime();
