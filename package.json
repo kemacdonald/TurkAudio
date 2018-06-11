@@ -1,0 +1,27 @@
+{
+  "name": "turk_audio_app",
+  "version": "1.0.0",
+  "description": "simple web app for collecting audio data from MTurk",
+  "main": "turk_app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "audio",
+    "turk"
+  ],
+  "author": "Kyle MacDonald",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "formidable": "^1.2.1",
+    "frameguard": "^3.0.0",
+    "fs": "0.0.1-security",
+    "helmet": "^3.12.1",
+    "mime": "^2.3.1",
+    "mkdirp": "^0.5.1",
+    "underscore": "^1.9.1",
+    "url": "^0.11.0",
+    "util": "^0.10.4"
+  }
+}
