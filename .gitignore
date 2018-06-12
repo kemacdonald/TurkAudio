@@ -1,4 +1,4 @@
-utils/
+server_utils/
 conf/
 *.conf
 .DS_Store
