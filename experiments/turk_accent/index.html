@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reading Game</title>
+  <!-- CSS styles -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href = "https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css">
+  <link rel="stylesheet" href="styles/local_style.css">
+  <!-- General JavaScript Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore.js" type="text/javascript" defer></script>
+  <script src="https://code.jquery.com/jquery-1.12.4.js" defer></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js" defer></script>
+  <script src="https://cdn.webrtc-experiment.com/DetectRTC.js" defer></script>
+  <!-- Experiment-specific JavaScript -->
+   <script src="js/bundle.js"></script>
+  <!-- <script type="text/javascript" src="js/browserCheck.js" defer></script>
+  <script type="text/javascript" src="js/mmturkey.js" defer></script>
+  <script type="text/javascript" src="js/expt_recording_helpers.js" defer></script>  -->
+  <!-- <script type="text/javascript" src="js/ajax.js" defer></script> -->
+  <!-- <script type="text/javascript" src="js/expt_control_flow_helpers.js" defer></script>
+  <script type="text/javascript" src="js/expt_control_flow.js" defer></script>
+  <script type="text/javascript" src="js/expt_init.js" defer></script> -->
+</head>
+
+<body>
+  <!-- Task Introduction Slide -->
+  <div class="slide" id="introduction">
+    <h2>Fast food ordering game</h2>
+      <p class="block-text">In this game, we're interested in learning about how
+      people read sentences. The task should only take about 5-10 minutes.
+      Thank you for participating!
+      </p>
+      <p class="block-text">To complete this HIT, you will need to use
+      either Chrome or Firefox and have a working microphone.
+      </p>
+      <button type="button" id="start_button" onclick="this.blur(); exp.init_order_slide()">
+      I am using Chrome or Firefox and ready to begin
+      </button>
+
+      <p class="block-text" id="legal">
+      We have recently been made aware that your public Amazon.com profile
+      can be accessed via your worker ID if you do not choose to opt out.
+      If you would like to opt out of this feature, you may follow
+      instructions available <a href="https://www.amazon.com/gp/help/customer/display.html?nodeId=16465241"> here.</a>
+      If you have any questions or issues with the task, please contact
+      <a href="mailto:kyle@apprente.com">kyle@apprente.com</a>.
+      </p>
+  </div>
+
+  <!-- Task Instructions Slide -->
+  <div class="slide" id="instructions">
+    <h2>Task Instructions</h2>
+      <p class="block-text">In this task, we want you to read sentences.
+      </p>
+      <p class="block-text">For each sentence, you will a box with the sentence
+      text. You should read the text as if you were having a casual conversation
+      with a friend. Here's an example of the text:
+      </p>
+      <div><img src="media/example_correction.png" alt="example_order" width="600"></div>
+      <audio id="example_audio"></audio>
+      <button type="button" id="play_example" onclick="this.blur(); exp.play_example_audio()">
+      Click here to listen to an example recording.
+      </button>
+      <p class="block-text">
+        It is important that each sentence contains all the words in the text.
+        You will receive a <b>10 cent bonus after the task if your recordings contain
+        all of the items</b>. Thanks!
+      </p>
+      <p class="block-text">
+        To complete the task, you will be asked to allow
+        the browser to access your microphone to record your orders.
+      </p>
+      <button type="button" id="start_ordering" onClick="exp.init_order_slide()">
+      Click here to start ordering
+      </button>
+  </div>
+
+  <!-- Order slide: the workhorse -->
+  <div class="slide" id="order_slide">
+    <table id="progress_table">
+        <tr>
+          <td><p>Progress:</p></td>
+          <td><div class="progress"></div></td>
+          <td><div id="order_text"></div></td>
+        </tr>
+    </table>
+    <div id="items_table"></div>
+    <div>
+      <p class="block-text">The <b>LEFT ARROW KEY</b> starts recording. The <b>RIGHT ARROW KEY</b> stops recording.<br>
+        When you stop recording, your order will be uploaded automatically and a new one will appear.</p>
+      <img class="waveform" src="media/waveform.gif" alt="waveform">
+      <div id="upload_text"></div>
+    </div>
+  </div>
+
+  <!-- Closing Q&A slide -->
+  <div class="slide" id="final_questions">
+    <h2>Feedback</h2>
+    <p class="block-text"> Please answer the following questions to help us
+    improve our task. Thank you! <p>
+    <p class="block-text" name="language">
+      What was the first language that you learned? <br>
+      <input type="text" id="language" name="language" size="70"><br>
+      At what age in years did you first learn English? (0 = from birth)<br>
+      <input type="text" id="age_exposure" name="age_exposure" size="70"><br>
+      Please list any other languages you speak:<br>
+      <input type="text" id="other_languages" name="other_languages" size="70"><br>
+      What country did you grow up in? <br>
+      <input type="text" id="country" name="country" size="70"><br>
+      If you grew up in the US, what state did you grow up in?<br>
+      <input type="text" id="us_state" name="us_state" size="70"><br>
+      What is your age in years? <br>
+      <input type="text" id="age" name="age" size="70"><br>
+      What is your gender? (m = male, f = female, o = other) <br>
+      <input type="text" id="gender" name="gender" size="70"><br>
+      Was there anything broken or that could be improved? <br>
+      <input type="text" id="comments" name="comments" size="70"><br>
+    </p>
+    <button type="button" id="checkFinishedButton" onClick="exp.check_final_slide()">
+    Finished: Submit to MTurk</button>
+    <div id="checkMessage"></div>
+  </div>
+
+<!-- Closing Message Slide -->
+  <div class="slide" id="finished">
+      <p class="block-text"> You're finished - thanks for participating!
+      Submitting to Mechanical Turk...</p>
+  </div>
+
+</body>
+</html>
