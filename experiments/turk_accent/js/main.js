@@ -21,7 +21,7 @@ $(document).ready(function(){
   ajax.generate_list_of_orders(app);
   DetectRTC.load(exp.onRTCready(app, turk));
   // Initialize progress bar and show the first slide of the experiment
-  control.showSlide("introduction")
+  control.showSlide("introduction");
   $(".progress").progressbar();
   $(".progress").progressbar( "option", "max", app.config.n_orders_in_list);
 });
