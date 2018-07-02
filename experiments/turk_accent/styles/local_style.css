@@ -139,3 +139,20 @@ img.waveform {
   margin: 0 auto;
   margin-bottom: 1em;
 }
+
+#instructions_sentence p {
+  width: 400px;
+  text-align: justify;
+  margin: 0 auto;
+  margin-bottom: 1em;
+}
+
+#sentence_text p {
+  font-size: 20px;
+  font-weight: bold;
+	color: green;
+  text-align: justify;
+  margin: 0 auto;
+  margin-top: 3em;
+  margin-bottom: 3em;
+}

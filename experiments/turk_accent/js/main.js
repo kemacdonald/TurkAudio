@@ -2,7 +2,7 @@
 global.jQuery = require('jquery');
 
 var ajax = require('./ajax'),
-  control = require('./control_flow'),
+  control = require('./control'),
   exp = require('./experiment.js'),
   app = require('./app.js')
   turk = require('./mmturkey.js'),
@@ -18,10 +18,7 @@ var ajax = require('./ajax'),
 // wrap the init code in document.ready
 // so that the ajax call only fires once when the page loads
 $(document).ready(function(){
-  ajax.generate_list_of_orders(app);
+  ajax.generate_sentence_list(app);
   DetectRTC.load(exp.onRTCready(app, turk));
-  // Initialize progress bar and show the first slide of the experiment
   control.showSlide("introduction");
-  $(".progress").progressbar();
-  $(".progress").progressbar( "option", "max", app.config.n_orders_in_list);
 });

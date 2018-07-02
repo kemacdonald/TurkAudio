@@ -1,6 +1,6 @@
 // EXPERIMENT CONTROL FLOW
 var DetectRTC = require('detectrtc'),
-  control = require('./control_flow'),
+  control = require('./control'),
   browser = require('./browserCheck'),
   ajax = require('./ajax'),
   record = require('./recording.js')
@@ -18,7 +18,6 @@ function onRTCready(app, turk) {
     screen_width: screen.width,
     screen_height: screen.height,
     mobile_device: /Mobi/.test(navigator.userAgent),
-    order_id: "",
     first_language: "",
     age_exposure_eng: "",
     country: "",
@@ -40,7 +39,6 @@ function onRTCready(app, turk) {
         alert("Please accept the HIT to view")
         control.showSlide('introduction')
       } else {
-        exp.order_id = control.get_list_number(app.state.order_keys[0])
         if (!DetectRTC.isWebRTCSupported) {
           control.showSlide("instructions");
           alert("This HIT will only work on computers/browsers with a working microphone. Please switch if you would like to accept this HIT. Thanks!");
@@ -52,19 +50,22 @@ function onRTCready(app, turk) {
         }
       }
     },
+    config_keylist: function(app) {
+      app.state.key_list = app.config.training_keys + app.config.eval_keys;
+      app.state.key_list = app.state.key_list.split(",")
+      _.shuffle(app.state.key_list)
+    },
     // init the ordering slide
     init_order_slide: function() {
+      control.init_progress_bar(app)
+      exp.config_keylist(app);
       $('#example_audio').trigger('pause'); // pause any audio that might still be playing
       $(".progress").attr("style", "visibility: visible"); // make the progress bar visible
-
       // if(!_.isEmpty(turk.workerId) & !turk.previewMode){
       //   create_upload_dir_ajax(list_number, turk.workerId) ; // create an upload directory if this is a turker
       //   remove_list_number_ajax(list_number); // remove the oreder list from the pool
       // }
-
-      ajax.create_upload_dir(app.state.list_number, turk.workerId) ; // create an upload directory if this is a turker
-      ajax.remove_list_number(app.state.list_number); // remove the oreder list from the pool
-
+      ajax.create_upload_dir(turk.workerId) ; // create an upload directory if this is a turker
       control.init_order(app); // creates an order (see expt_helpers.js)
       control.bind_keyboard_events(); // binds the left and right arrows to control the recorder
       record.init_audio_recording(app); // note that this function also starts the experiment once the recorder objects has been created

@@ -11,12 +11,6 @@ var express = require('express'),
 
 var jsonParser = bodyParser.json()
 
-// handle routing requests
-router.use(function (req, res, next) {
-  console.log('Time:', Date.now())
-  next()
-})
-
 router.post('/make_dir', jsonParser, function(req, res) {
   var dir_path = path.join('uploads', req.body['dir_name']);
   mkdirp(dir_path, function(err) {

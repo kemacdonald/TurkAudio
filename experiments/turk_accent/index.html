@@ -9,26 +9,15 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
   <link rel="stylesheet" href = "https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css">
   <link rel="stylesheet" href="styles/local_style.css">
-  <!-- General JavaScript Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore.js" type="text/javascript" defer></script>
-  <script src="https://code.jquery.com/jquery-1.12.4.js" defer></script>
+  <!-- JavaScript Libraries -->
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js" defer></script>
-  <script src="https://cdn.webrtc-experiment.com/DetectRTC.js" defer></script>
-  <!-- Experiment-specific JavaScript -->
    <script src="js/bundle.js"></script>
-  <!-- <script type="text/javascript" src="js/browserCheck.js" defer></script>
-  <script type="text/javascript" src="js/mmturkey.js" defer></script>
-  <script type="text/javascript" src="js/expt_recording_helpers.js" defer></script>  -->
-  <!-- <script type="text/javascript" src="js/ajax.js" defer></script> -->
-  <!-- <script type="text/javascript" src="js/expt_control_flow_helpers.js" defer></script>
-  <script type="text/javascript" src="js/expt_control_flow.js" defer></script>
-  <script type="text/javascript" src="js/expt_init.js" defer></script> -->
 </head>
 
 <body>
   <!-- Task Introduction Slide -->
   <div class="slide" id="introduction">
-    <h2>Fast food ordering game</h2>
+    <h2>Sentence Reading Game</h2>
       <p class="block-text">In this game, we're interested in learning about how
       people read sentences. The task should only take about 5-10 minutes.
       Thank you for participating!
@@ -84,10 +73,16 @@
         <tr>
           <td><p>Progress:</p></td>
           <td><div class="progress"></div></td>
-          <td><div id="order_text"></div></td>
+          <td>
+            <div id='instructions_sentence'>
+              <p class='block-text'>Try to read each sentence as if you were
+              chatting casually with a friend. And please make sure you say each
+              word in the sentence.</p>
+            </div>
+          </td>
         </tr>
     </table>
-    <div id="items_table"></div>
+    <div id="sentence_text"></div>
     <div>
       <p class="block-text">The <b>LEFT ARROW KEY</b> starts recording. The <b>RIGHT ARROW KEY</b> stops recording.<br>
         When you stop recording, your order will be uploaded automatically and a new one will appear.</p>

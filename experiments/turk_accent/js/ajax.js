@@ -1,23 +1,15 @@
 //HELPER FUNCTIONS FOR CLIENT-SERVER COMMUNICATION DURING THE EXPERIMENT
-var control = require('./control_flow')
+var control = require('./control')
 
-function generate_list_of_orders_ajax(app) {
+function generate_sentence_list(app) {
   $.ajax({
     dataType: "json",
-    url: 'order_list_generator.json',
+    url: 'data_model/common_voices.json',
     success: function (data) {
-      console.log("Successfully loaded condition object");
-      app.state.order_number_obj = data;
-      // sample from numbers in the list generator pool
-      // if the pool is empty generate random, valid order_list number
-      if(!_.isEmpty(app.state.order_number_obj["list_number_generator"])) {
-        console.log('sampling list number from list generator dict');
-        app.state.list_number = _.sample(app.state.order_number_obj['list_number_generator'], 1).toString();
-      } else {
-        console.log('sampling list number randomly');
-        app.state.list_number = control.random(app.config.n_orders_list_min, app.config.n_orders_list_max).toString();
-      }
-    get_list_of_orders_ajax(app);
+      console.log("Successfully loaded sentence dict");
+      app.config.sentence_dict = data;
+      get_eval_keys_ajax(app);
+      get_training_keys_ajax(app);
     }
   });
 }
@@ -33,18 +25,34 @@ function remove_list_number_ajax(list_number) {
   });
 }
 
-//
-// // request to get the list of orders for this turker
-function get_list_of_orders_ajax(app) {
-  var order_url = "order_lists/person" + app.state.list_number + ".json";
+// request to get the list of orders for this turker
+function get_eval_keys_ajax(app) {
+  var order_url = "data_model/eval_keys.json";
   $.ajax({
     dataType: "json",
     url: order_url,
     success: function (data) {
-      console.log("Successfully initiated experiment")
-      app.state.list_of_orders = data;
-      app.state.order_keys = _.keys(app.state.list_of_orders);
-      app.state.n_trials = _.size(app.state.list_of_orders)
+      console.log("Successfully retrieved evaluation keys")
+      app.config.eval_keys = data;
+    },
+    error: function(xhr, status, error) {
+      var err = eval("(" + xhr.responseText + ")");
+      console.log(err.Message);
+    }
+  });
+};
+
+// request to get the list of orders for this turker
+function get_training_keys_ajax(app) {
+  var order_url = "data_model/training_keys.json";
+  $.ajax({
+    dataType: "json",
+    url: order_url,
+    success: function (data) {
+      console.log("Successfully training_keys evaluation keys")
+      training_keys_sample = _.sample(data, app.config.n_training_trials);
+      app.config.training_keys = training_keys_sample;
+      app.config.n_trials = app.config.n_eval_trials + app.config.n_training_trials
     },
     error: function(xhr, status, error) {
       var err = eval("(" + xhr.responseText + ")");
@@ -54,8 +62,8 @@ function get_list_of_orders_ajax(app) {
 };
 
 // request to create the directory to store audio file uploads
-function create_upload_dir_ajax(list_number, turk_id) {
-  var dir_name = "person" + list_number + "_" + turk_id;
+function create_upload_dir_ajax(turk_id) {
+  var dir_name = "turker" + "_" + turk_id;
   $.ajax({
     dataType: "json",
     type: "POST",
@@ -88,22 +96,12 @@ function end_and_submit_exp_ajax() {
   if(!_.isEmpty(exp.start_time)) {
     exp.completion_time = exp.end_time.getTime() - exp.start_time.getTime();
   }
-  // add list number to the finished pool
-  if(!_.isEmpty(turk.workerId)) {
-    $.ajax({
-      type: "POST",
-      contentType: "application/json; charset=utf-8",
-      url: "turk_accent_routes/submit",
-      data: JSON.stringify({list_number}),
-      dataType: "json"
-    });
-  }
   setTimeout(function(){turk.submit(exp);}, 500);
 }
 
 // export the module
 module.exports = {
-  generate_list_of_orders: generate_list_of_orders_ajax,
+  generate_sentence_list: generate_sentence_list,
   remove_list_number: remove_list_number_ajax,
   create_upload_dir: create_upload_dir_ajax,
   upload_audio: upload_audio_ajax,

@@ -1,24 +1,16 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 //HELPER FUNCTIONS FOR CLIENT-SERVER COMMUNICATION DURING THE EXPERIMENT
-var control = require('./control_flow')
+var control = require('./control')
 
-function generate_list_of_orders_ajax(app) {
+function generate_sentence_list(app) {
   $.ajax({
     dataType: "json",
-    url: 'order_list_generator.json',
+    url: 'data_model/common_voices.json',
     success: function (data) {
-      console.log("Successfully loaded condition object");
-      app.state.order_number_obj = data;
-      // sample from numbers in the list generator pool
-      // if the pool is empty generate random, valid order_list number
-      if(!_.isEmpty(app.state.order_number_obj["list_number_generator"])) {
-        console.log('sampling list number from list generator dict');
-        app.state.list_number = _.sample(app.state.order_number_obj['list_number_generator'], 1).toString();
-      } else {
-        console.log('sampling list number randomly');
-        app.state.list_number = control.random(app.config.n_orders_list_min, app.config.n_orders_list_max).toString();
-      }
-    get_list_of_orders_ajax(app);
+      console.log("Successfully loaded sentence dict");
+      app.config.sentence_dict = data;
+      get_eval_keys_ajax(app);
+      get_training_keys_ajax(app);
     }
   });
 }
@@ -34,18 +26,34 @@ function remove_list_number_ajax(list_number) {
   });
 }
 
-//
-// // request to get the list of orders for this turker
-function get_list_of_orders_ajax(app) {
-  var order_url = "order_lists/person" + app.state.list_number + ".json";
+// request to get the list of orders for this turker
+function get_eval_keys_ajax(app) {
+  var order_url = "data_model/eval_keys.json";
   $.ajax({
     dataType: "json",
     url: order_url,
     success: function (data) {
-      console.log("Successfully initiated experiment")
-      app.state.list_of_orders = data;
-      app.state.order_keys = _.keys(app.state.list_of_orders);
-      app.state.n_trials = _.size(app.state.list_of_orders)
+      console.log("Successfully retrieved evaluation keys")
+      app.config.eval_keys = data;
+    },
+    error: function(xhr, status, error) {
+      var err = eval("(" + xhr.responseText + ")");
+      console.log(err.Message);
+    }
+  });
+};
+
+// request to get the list of orders for this turker
+function get_training_keys_ajax(app) {
+  var order_url = "data_model/training_keys.json";
+  $.ajax({
+    dataType: "json",
+    url: order_url,
+    success: function (data) {
+      console.log("Successfully training_keys evaluation keys")
+      training_keys_sample = _.sample(data, app.config.n_training_trials);
+      app.config.training_keys = training_keys_sample;
+      app.config.n_trials = app.config.n_eval_trials + app.config.n_training_trials
     },
     error: function(xhr, status, error) {
       var err = eval("(" + xhr.responseText + ")");
@@ -55,8 +63,8 @@ function get_list_of_orders_ajax(app) {
 };
 
 // request to create the directory to store audio file uploads
-function create_upload_dir_ajax(list_number, turk_id) {
-  var dir_name = "person" + list_number + "_" + turk_id;
+function create_upload_dir_ajax(turk_id) {
+  var dir_name = "turker" + "_" + turk_id;
   $.ajax({
     dataType: "json",
     type: "POST",
@@ -89,45 +97,33 @@ function end_and_submit_exp_ajax() {
   if(!_.isEmpty(exp.start_time)) {
     exp.completion_time = exp.end_time.getTime() - exp.start_time.getTime();
   }
-  // add list number to the finished pool
-  if(!_.isEmpty(turk.workerId)) {
-    $.ajax({
-      type: "POST",
-      contentType: "application/json; charset=utf-8",
-      url: "turk_accent_routes/submit",
-      data: JSON.stringify({list_number}),
-      dataType: "json"
-    });
-  }
   setTimeout(function(){turk.submit(exp);}, 500);
 }
 
 // export the module
 module.exports = {
-  generate_list_of_orders: generate_list_of_orders_ajax,
+  generate_sentence_list: generate_sentence_list,
   remove_list_number: remove_list_number_ajax,
   create_upload_dir: create_upload_dir_ajax,
   upload_audio: upload_audio_ajax,
   end_and_submit_exp: end_and_submit_exp_ajax
 };
 
-},{"./control_flow":4}],2:[function(require,module,exports){
+},{"./control":4}],2:[function(require,module,exports){
 // APP Config
-
 var app = {
-  config: {n_orders_in_list: 50,
-    n_orders_list_min: 20,
-    n_orders_list_max: 80},
+  config: {n_eval_trials: 100,
+    n_training_trials: 100,
+    sentence_dict: "",
+    training_keys: "",
+    eval_keys: "",
+    n_trials: ""
+  },
   state: {
-    order_number_obj: "",
-    list_number: "",
-    list_of_orders: "",
-    order_keys:"",
-    n_trials:"",
-    order_number: "",
-    person_key: "",
-    current_order_key:""}
-}
+    key_list: "",
+    current_sentence_key: "",
+    current_sentence_key_type: ""}
+  }
 
 module.exports = app
 
@@ -142,9 +138,9 @@ module.exports = browser;
 // These functions help with setting up and taking down 'slides' for the web app
 var record = require('./recording.js')
 
+
 // get and play example audio of an order
 function play_example_audio() {
-  console.log('blah')
   audio = $('#example_audio')
   audio.attr('src', "media/example_order.webm");
   audio.trigger('play')
@@ -194,22 +190,16 @@ function unbind_keyboard_events() {
 
 // builds the order based on the order key and the order instructions
 function init_order(app) {
-  app.state.current_order_key = get_next_order(app);
-  console.log("current order key is: " + app.state.current_order_key)
-  if (!_.isUndefined(app.state.current_order_key)){advance_exp(app)};
+  app.state.current_sentence_key = get_next_order(app);
+  console.log("current order key is: " + app.state.current_sentence_key)
+  if (!_.isUndefined(app.state.current_sentence_key)){advance_exp(app)};
 }
 
 // advances the experiment
-// if we are on the first trial, zero seconds between trials
-// if we are in any other trial, add 1 second delay
 function advance_exp(app) {
-  if (app.state.order_keys.length == app.config.n_trials - 1) {
-    var delay = 0
-  } else {
-    $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
-    var delay = 1000
-  }
-  setTimeout(function(){build_order_prompt(app.state.current_order_key, app.state.list_of_orders);}, delay);
+  var delay = 1000
+  $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
+  setTimeout(function(){build_prompt(app);}, delay);
 }
 
 // extracts the order list number from the order key
@@ -220,24 +210,19 @@ function get_list_number(order_key) {
 // gets the next order key from the list of order_keys
 function get_next_order(app) {
   // if order keys is empty, we are done and end the experiment
-  if( _.isEmpty(app.state.order_keys) ) {
+  if( _.isEmpty(app.state.key_list) ) {
     setTimeout(function(){ exp.init_final_slide();}, 1000); // add some delay before showing final slide
   } else {
-    return app.state.order_keys.shift();
+    return app.state.key_list.shift();
   }
 }
 
 // builds the html for each orderthat will be displayed to the user
-function build_order_prompt(current_order_key, list_of_orders) {
+function build_prompt(app) {
   // remove the order upload text
   $("#upload_text").html("");
-  var order = list_of_orders[current_order_key];
-  var thanks_text = order.pop(), please_text = order.shift();
-  please_text = please_text.replace('from top to bottom', "from left to right"); // temp hack to fix prompt
-  $(`#order_text`).html('<p class="block-text">' + please_text + '</p>');
-  // build the table of item prompts from order
-  var item_table_html = build_item_table(order);
-  $(`#items_table`).html(item_table_html);
+  var sentence = app.config.sentence_dict[app.state.current_sentence_key].sentence
+  $(`#sentence_text`).html('<p class="block-text">' + sentence + '</p>');
 }
 
 // cleans up the html for a single item in the order
@@ -262,6 +247,11 @@ function build_item_table(order) {
   return table_html
 }
 
+function init_progress_bar(app) {
+  $(".progress").progressbar();
+  $(".progress").progressbar( "option", "max", app.config.n_trials);
+}
+
 // export the module
 module.exports = {
   random: random,
@@ -273,15 +263,15 @@ module.exports = {
   get_list_number: get_list_number,
   advance_exp: advance_exp,
   get_next_order: get_next_order,
-  build_order_prompt: build_order_prompt,
   get_item_html: get_item_html,
-  build_item_table: build_item_table
+  build_item_table: build_item_table,
+  init_progress_bar: init_progress_bar
 };
 
 },{"./recording.js":8}],5:[function(require,module,exports){
 // EXPERIMENT CONTROL FLOW
 var DetectRTC = require('detectrtc'),
-  control = require('./control_flow'),
+  control = require('./control'),
   browser = require('./browserCheck'),
   ajax = require('./ajax'),
   record = require('./recording.js')
@@ -299,7 +289,6 @@ function onRTCready(app, turk) {
     screen_width: screen.width,
     screen_height: screen.height,
     mobile_device: /Mobi/.test(navigator.userAgent),
-    order_id: "",
     first_language: "",
     age_exposure_eng: "",
     country: "",
@@ -321,7 +310,6 @@ function onRTCready(app, turk) {
         alert("Please accept the HIT to view")
         control.showSlide('introduction')
       } else {
-        exp.order_id = control.get_list_number(app.state.order_keys[0])
         if (!DetectRTC.isWebRTCSupported) {
           control.showSlide("instructions");
           alert("This HIT will only work on computers/browsers with a working microphone. Please switch if you would like to accept this HIT. Thanks!");
@@ -333,19 +321,22 @@ function onRTCready(app, turk) {
         }
       }
     },
+    config_keylist: function(app) {
+      app.state.key_list = app.config.training_keys + app.config.eval_keys;
+      app.state.key_list = app.state.key_list.split(",")
+      _.shuffle(app.state.key_list)
+    },
     // init the ordering slide
     init_order_slide: function() {
+      control.init_progress_bar(app)
+      exp.config_keylist(app);
       $('#example_audio').trigger('pause'); // pause any audio that might still be playing
       $(".progress").attr("style", "visibility: visible"); // make the progress bar visible
-
       // if(!_.isEmpty(turk.workerId) & !turk.previewMode){
       //   create_upload_dir_ajax(list_number, turk.workerId) ; // create an upload directory if this is a turker
       //   remove_list_number_ajax(list_number); // remove the oreder list from the pool
       // }
-
-      ajax.create_upload_dir(app.state.list_number, turk.workerId) ; // create an upload directory if this is a turker
-      ajax.remove_list_number(app.state.list_number); // remove the oreder list from the pool
-
+      ajax.create_upload_dir(turk.workerId) ; // create an upload directory if this is a turker
       control.init_order(app); // creates an order (see expt_helpers.js)
       control.bind_keyboard_events(); // binds the left and right arrows to control the recorder
       record.init_audio_recording(app); // note that this function also starts the experiment once the recorder objects has been created
@@ -380,13 +371,13 @@ module.exports = {
   onRTCready: onRTCready
 }
 
-},{"./ajax":1,"./browserCheck":3,"./control_flow":4,"./recording.js":8,"detectrtc":10}],6:[function(require,module,exports){
+},{"./ajax":1,"./browserCheck":3,"./control":4,"./recording.js":8,"detectrtc":10}],6:[function(require,module,exports){
 (function (global){
 // EXPERIMENT SETUP
 global.jQuery = require('jquery');
 
 var ajax = require('./ajax'),
-  control = require('./control_flow'),
+  control = require('./control'),
   exp = require('./experiment.js'),
   app = require('./app.js')
   turk = require('./mmturkey.js'),
@@ -402,16 +393,13 @@ var ajax = require('./ajax'),
 // wrap the init code in document.ready
 // so that the ajax call only fires once when the page loads
 $(document).ready(function(){
-  ajax.generate_list_of_orders(app);
+  ajax.generate_sentence_list(app);
   DetectRTC.load(exp.onRTCready(app, turk));
-  // Initialize progress bar and show the first slide of the experiment
-  control.showSlide("introduction")
-  $(".progress").progressbar();
-  $(".progress").progressbar( "option", "max", app.config.n_orders_in_list);
+  control.showSlide("introduction");
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ajax":1,"./app.js":2,"./control_flow":4,"./experiment.js":5,"./mmturkey.js":7,"detectrtc":10,"jquery":12,"jquery-ui":11,"underscore":13}],7:[function(require,module,exports){
+},{"./ajax":1,"./app.js":2,"./control":4,"./experiment.js":5,"./mmturkey.js":7,"detectrtc":10,"jquery":12,"jquery-ui":11,"underscore":13}],7:[function(require,module,exports){
 // BSD 3-Clause License
 //
 // Copyright (c) 2018, Long Ouyang
@@ -616,16 +604,14 @@ module.exports = turk
 // Module with FUNCTIONS FOR RECORDING AUDIO ON AMT
 
 // construct the audio file name that gets uploaded to AWS
-function make_file_name(current_order_key) {
-  return current_order_key.concat('_'+ turk.workerId +'.webm');
+function make_file_name(current_key) {
+  return current_key.concat('_'+ turk.workerId +'.webm');
 }
 
 // get audio stream from user's mic using WebRTC API
 function init_audio_recording(app) {
-  console.log("app 1 is: ", app)
-  var control = require('./control_flow')
+  var control = require('./control')
   navigator.mediaDevices.getUserMedia({audio: true}).then(function (stream) {
-    console.log("app 2 is: ", app)
     recorder = new MediaRecorder(stream);
     // listen to dataavailable, which gets triggered whenever we have an audio blob available
     recorder.addEventListener('dataavailable', onRecordingReady);
@@ -642,7 +628,7 @@ module.exports = {
 
 // what to do once recording is ready
 function onRecordingReady(e) {
-  var control = require('./control_flow')
+  var control = require('./control')
   uploadBlob(e.data, e.target.app);
   // if(!_.isEmpty(turk.workerId)) {
   //   uploadBlob(e.data);
@@ -668,10 +654,10 @@ function stopRecording() {
 
 // upload audio to AWS
 function uploadBlob(blob, app) {
-  console.log("order key in upload function is: " + app.state.current_order_key)
+  console.log("order key in upload function is: " + app.state.current_sentence_key)
   var ajax = require('./ajax')
   var formData = new FormData();
-  var fileName = make_file_name(app.state.current_order_key);
+  var fileName = make_file_name(app.state.current_sentence_key);
   var fileObject = new File([blob], fileName, {
       type: 'video/webm'
   });
@@ -681,7 +667,7 @@ function uploadBlob(blob, app) {
   ajax.upload_audio(formData);
 }
 
-},{"./ajax":1,"./control_flow":4}],9:[function(require,module,exports){
+},{"./ajax":1,"./control":4}],9:[function(require,module,exports){
 (function (process){
 function detect() {
   var nodeVersion = getNodeVersion();

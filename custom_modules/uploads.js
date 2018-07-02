@@ -16,7 +16,7 @@ exports.uploadFile = function(req, res) {
   form.on('fileBegin', function(name, file) {
     // TODO: figure out how to get turk_id into file name
     //var turk_id = "_" + file.name.split("_")[4];
-    var person_dir = file.name.slice(0, file.name.indexOf("_")) + '_/'
+    var person_dir = 'turker_/' // need to fix this 
     file.path = './uploads/' + person_dir + file.name;
     res.end();
   });
