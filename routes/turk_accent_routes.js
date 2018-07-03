@@ -11,6 +11,39 @@ var express = require('express'),
 
 var jsonParser = bodyParser.json()
 
+router.get('/sentence_dict', jsonParser, function(req, res) {
+  var app = req.query;
+  // get sentence dict
+  var sentence_dict_path = path.join('experiments', 'turk_accent', 'data_model', 'common_voices.json');
+  var full_sentence_dict = JSON.parse(fs.readFileSync(sentence_dict_path, 'utf8'));
+  // read in training and eval keys
+  var eval_keys_path = path.join('experiments', 'turk_accent', 'data_model', 'eval_keys.json');
+  var training_keys_path = path.join('experiments', 'turk_accent', 'data_model', 'training_keys.json');
+  var eval_keys = JSON.parse(fs.readFileSync(eval_keys_path, 'utf8'));
+  var eval_keys_sample = _.sample(eval_keys, app.state.n_eval_trials);
+  var training_keys = JSON.parse(fs.readFileSync(training_keys_path, 'utf8'));
+  var training_keys_sample = _.sample(training_keys, app.state.n_training_trials);
+  // add to app
+  app.state.training_keys = training_keys_sample;
+  app.state.eval_keys = eval_keys_sample;
+  app.state.n_trials = parseInt(app.config.n_eval_trials) + parseInt(app.config.n_training_trials);
+  // build key list
+  app.state.key_list = app.state.training_keys + "," + app.state.eval_keys;
+  app.state.key_list = app.state.key_list.split(",")
+  _.shuffle(app.state.key_list)
+  // build sentence dictionary
+  var curr_sentence_dict = {}
+  var key_length = 6
+  _.each(app.state.key_list, function(key) {
+      if (key.toString().length == key_length) {
+        curr_sentence_dict[key] = {'sentence': full_sentence_dict[key]['sentence'],
+                                  'sentence_type': full_sentence_dict[key]['sentence_type']}
+      };
+  });
+  app.state.sentence_dict = curr_sentence_dict;
+  res.json(app.state);
+})
+
 router.post('/make_dir', jsonParser, function(req, res) {
   var dir_path = path.join('uploads', req.body['dir_name']);
   mkdirp(dir_path, function(err) {

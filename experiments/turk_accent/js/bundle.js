@@ -2,65 +2,66 @@
 //HELPER FUNCTIONS FOR CLIENT-SERVER COMMUNICATION DURING THE EXPERIMENT
 var control = require('./control')
 
-function generate_sentence_list(app) {
+function configure_app(app, callback) {
   $.ajax({
     dataType: "json",
-    url: 'data_model/common_voices.json',
+    type: "GET",
+    url: 'turk_accent_routes/sentence_dict',
+    data: app,
     success: function (data) {
       console.log("Successfully loaded sentence dict");
-      app.config.sentence_dict = data;
-      get_eval_keys_ajax(app);
-      get_training_keys_ajax(app);
+      app.state = data;
+      callback();
     }
   });
 }
 
-// Removes current list number from the pool of possible list numbers
-function remove_list_number_ajax(list_number) {
-  $.ajax({
-    type: "POST",
-    contentType: "application/json; charset=utf-8",
-    url: "turk_accent_routes/remove_list_number",
-    data: JSON.stringify({list_number}),
-    dataType: "json"
-  });
-}
+// // Removes current list number from the pool of possible list numbers
+// function remove_list_number_ajax(list_number) {
+//   $.ajax({
+//     type: "POST",
+//     contentType: "application/json; charset=utf-8",
+//     url: "turk_accent_routes/remove_list_number",
+//     data: JSON.stringify({list_number}),
+//     dataType: "json"
+//   });
+// }
 
-// request to get the list of orders for this turker
-function get_eval_keys_ajax(app) {
-  var order_url = "data_model/eval_keys.json";
-  $.ajax({
-    dataType: "json",
-    url: order_url,
-    success: function (data) {
-      console.log("Successfully retrieved evaluation keys")
-      app.config.eval_keys = data;
-    },
-    error: function(xhr, status, error) {
-      var err = eval("(" + xhr.responseText + ")");
-      console.log(err.Message);
-    }
-  });
-};
-
-// request to get the list of orders for this turker
-function get_training_keys_ajax(app) {
-  var order_url = "data_model/training_keys.json";
-  $.ajax({
-    dataType: "json",
-    url: order_url,
-    success: function (data) {
-      console.log("Successfully training_keys evaluation keys")
-      training_keys_sample = _.sample(data, app.config.n_training_trials);
-      app.config.training_keys = training_keys_sample;
-      app.config.n_trials = app.config.n_eval_trials + app.config.n_training_trials
-    },
-    error: function(xhr, status, error) {
-      var err = eval("(" + xhr.responseText + ")");
-      console.log(err.Message);
-    }
-  });
-};
+// // request to get the list of orders for this turker
+// function get_eval_keys_ajax(app) {
+//   var order_url = "data_model/eval_keys.json";
+//   $.ajax({
+//     dataType: "json",
+//     url: order_url,
+//     success: function (data) {
+//       console.log("Successfully retrieved evaluation keys")
+//       app.config.eval_keys = data;
+//     },
+//     error: function(xhr, status, error) {
+//       var err = eval("(" + xhr.responseText + ")");
+//       console.log(err.Message);
+//     }
+//   });
+// };
+//
+// // request to get the list of orders for this turker
+// function get_training_keys_ajax(app) {
+//   var order_url = "data_model/training_keys.json";
+//   $.ajax({
+//     dataType: "json",
+//     url: order_url,
+//     success: function (data) {
+//       console.log("Successfully training_keys evaluation keys")
+//       training_keys_sample = _.sample(data, app.config.n_training_trials);
+//       app.config.training_keys = training_keys_sample;
+//       app.config.n_trials = app.config.n_eval_trials + app.config.n_training_trials
+//     },
+//     error: function(xhr, status, error) {
+//       var err = eval("(" + xhr.responseText + ")");
+//       console.log(err.Message);
+//     }
+//   });
+// };
 
 // request to create the directory to store audio file uploads
 function create_upload_dir_ajax(turk_id) {
@@ -102,8 +103,7 @@ function end_and_submit_exp_ajax() {
 
 // export the module
 module.exports = {
-  generate_sentence_list: generate_sentence_list,
-  remove_list_number: remove_list_number_ajax,
+  configure_app: configure_app,
   create_upload_dir: create_upload_dir_ajax,
   upload_audio: upload_audio_ajax,
   end_and_submit_exp: end_and_submit_exp_ajax
@@ -112,18 +112,19 @@ module.exports = {
 },{"./control":4}],2:[function(require,module,exports){
 // APP Config
 var app = {
-  config: {n_eval_trials: 100,
-    n_training_trials: 100,
-    sentence_dict: "",
-    training_keys: "",
-    eval_keys: "",
-    n_trials: ""
+  config: {n_eval_trials: 5,
+    n_training_trials: 5,
   },
   state: {
+    n_trials: "",
+    training_keys: "",
+    eval_keys: "",
+    sentence_dict: "",
     key_list: "",
     current_sentence_key: "",
-    current_sentence_key_type: ""}
+    current_sentence_key_type: ""
   }
+}
 
 module.exports = app
 
@@ -198,8 +199,10 @@ function init_order(app) {
 // advances the experiment
 function advance_exp(app) {
   var delay = 1000
-  $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
-  setTimeout(function(){build_prompt(app);}, delay);
+  setTimeout(function(){
+    build_prompt(app);
+    $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
+  }, delay);
 }
 
 // extracts the order list number from the order key
@@ -209,6 +212,7 @@ function get_list_number(order_key) {
 
 // gets the next order key from the list of order_keys
 function get_next_order(app) {
+  console.log(app.state.key_list)
   // if order keys is empty, we are done and end the experiment
   if( _.isEmpty(app.state.key_list) ) {
     setTimeout(function(){ exp.init_final_slide();}, 1000); // add some delay before showing final slide
@@ -221,7 +225,7 @@ function get_next_order(app) {
 function build_prompt(app) {
   // remove the order upload text
   $("#upload_text").html("");
-  var sentence = app.config.sentence_dict[app.state.current_sentence_key].sentence
+  var sentence = app.state.sentence_dict[app.state.current_sentence_key].sentence
   $(`#sentence_text`).html('<p class="block-text">' + sentence + '</p>');
 }
 
@@ -249,7 +253,7 @@ function build_item_table(order) {
 
 function init_progress_bar(app) {
   $(".progress").progressbar();
-  $(".progress").progressbar( "option", "max", app.config.n_trials);
+  $(".progress").progressbar( "option", "max", app.state.n_trials);
 }
 
 // export the module
@@ -321,15 +325,9 @@ function onRTCready(app, turk) {
         }
       }
     },
-    config_keylist: function(app) {
-      app.state.key_list = app.config.training_keys + app.config.eval_keys;
-      app.state.key_list = app.state.key_list.split(",")
-      _.shuffle(app.state.key_list)
-    },
     // init the ordering slide
     init_order_slide: function() {
       control.init_progress_bar(app)
-      exp.config_keylist(app);
       $('#example_audio').trigger('pause'); // pause any audio that might still be playing
       $(".progress").attr("style", "visibility: visible"); // make the progress bar visible
       // if(!_.isEmpty(turk.workerId) & !turk.previewMode){
@@ -386,16 +384,13 @@ var ajax = require('./ajax'),
   _ = require('underscore'),
   jquery_ui = require('jquery-ui');
 
-// Key functionality is two AJAX calls that are initiated by generate_list_of_orders()
-// The first generates an order number based on a json dict of possible order_lists
-// The second call grabs the ordering instructions json list to display it to the turker
-
-// wrap the init code in document.ready
-// so that the ajax call only fires once when the page loads
+// wrap the app config code in document.ready
+// load the app using a callback so it loads after app is configured
 $(document).ready(function(){
-  ajax.generate_sentence_list(app);
-  DetectRTC.load(exp.onRTCready(app, turk));
-  control.showSlide("introduction");
+  ajax.configure_app(app, function() {
+    DetectRTC.load(exp.onRTCready(app, turk));
+    control.showSlide("introduction");
+  });
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})

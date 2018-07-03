@@ -62,8 +62,10 @@ function init_order(app) {
 // advances the experiment
 function advance_exp(app) {
   var delay = 1000
-  $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
-  setTimeout(function(){build_prompt(app);}, delay);
+  setTimeout(function(){
+    build_prompt(app);
+    $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
+  }, delay);
 }
 
 // extracts the order list number from the order key
@@ -73,6 +75,7 @@ function get_list_number(order_key) {
 
 // gets the next order key from the list of order_keys
 function get_next_order(app) {
+  console.log(app.state.key_list)
   // if order keys is empty, we are done and end the experiment
   if( _.isEmpty(app.state.key_list) ) {
     setTimeout(function(){ exp.init_final_slide();}, 1000); // add some delay before showing final slide
@@ -85,7 +88,7 @@ function get_next_order(app) {
 function build_prompt(app) {
   // remove the order upload text
   $("#upload_text").html("");
-  var sentence = app.config.sentence_dict[app.state.current_sentence_key].sentence
+  var sentence = app.state.sentence_dict[app.state.current_sentence_key].sentence
   $(`#sentence_text`).html('<p class="block-text">' + sentence + '</p>');
 }
 
@@ -113,7 +116,7 @@ function build_item_table(order) {
 
 function init_progress_bar(app) {
   $(".progress").progressbar();
-  $(".progress").progressbar( "option", "max", app.config.n_trials);
+  $(".progress").progressbar( "option", "max", app.state.n_trials);
 }
 
 // export the module

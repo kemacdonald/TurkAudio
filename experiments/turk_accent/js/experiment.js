@@ -50,15 +50,9 @@ function onRTCready(app, turk) {
         }
       }
     },
-    config_keylist: function(app) {
-      app.state.key_list = app.config.training_keys + app.config.eval_keys;
-      app.state.key_list = app.state.key_list.split(",")
-      _.shuffle(app.state.key_list)
-    },
     // init the ordering slide
     init_order_slide: function() {
       control.init_progress_bar(app)
-      exp.config_keylist(app);
       $('#example_audio').trigger('pause'); // pause any audio that might still be playing
       $(".progress").attr("style", "visibility: visible"); // make the progress bar visible
       // if(!_.isEmpty(turk.workerId) & !turk.previewMode){
