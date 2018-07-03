@@ -1,14 +1,5 @@
-#!/usr/bin/env node
-
-/* turk_app.js  */
-
+// Root Turk App
 var express = require('express'),
-  fs = require('fs'),
-  path = require('path'),
-  mkdirp = require('mkdirp'),
-  url = require('url'),
-  formidable = require('formidable'),
-  util = require('util'),
   helmet = require('helmet'),
   bodyParser = require('body-parser'),
   app = express()
