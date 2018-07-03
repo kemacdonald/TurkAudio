@@ -1,9 +1,9 @@
-'''
-Short python script to generate list assignments
+"""
+Short script to generate list assignments
 data structure for turk audio data collection.
 The goal is to ensure that we have a one-to-one
-mapping of order_lists to participants.
-'''
+mapping of order lists to participants.
+"""
 import json
 
 n_orders_start = 20

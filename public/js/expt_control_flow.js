@@ -39,6 +39,9 @@ function onRTCready() {
           alert("This HIT will only work on computers/browsers with a working microphone. Please switch if you would like to accept this HIT. Thanks!");
         } else {
           exp.start_time = new Date();
+          if(!_.isEmpty(turk.workerId)) {
+            remove_list_number_ajax(list_number); // remove the order list from the pool
+          }
           // hide the start ordering button until they listen to the example
           $('button#start_ordering').hide()
           showSlide('instructions')
@@ -51,7 +54,6 @@ function onRTCready() {
       $(".progress").attr("style", "visibility: visible"); // make the progress bar visible
       if(!_.isEmpty(turk.workerId) & !turk.previewMode){
         create_upload_dir_ajax(list_number); // create an upload directory if this is a turker
-        remove_list_number_ajax(list_number); // remove the oreder list from the pool
       }
       init_order(); // creates an order (see expt_helpers.js)
       bind_keyboard_events(); // binds the left and right arrows to control the recorder

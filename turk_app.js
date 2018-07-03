@@ -17,22 +17,13 @@ var jsonParser = bodyParser.json()
 
 // keep all security middleware except frameguard
 // since we want display on Mturk as iframe
-app.use(helmet({
-  frameguard: false
-}));
+app.use(helmet({frameguard: false}));
 
 //tell express that public is the root of our public web folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// handle routing requests
-router.use(function (req, res, next) {
-  console.log('Time:', Date.now())
-  next()
-})
-
 router.post('/make_dir', jsonParser, function(req, res) {
-  console.log(req.body['dir_name'])
-  var dir_path = "./uploads/"+req.body['dir_name'];
+  var dir_path = "./uploads/"+req.body['dir_name'] + "_" + req.body['turk_id'];
   mkdirp(dir_path, function(err) {
     if (err) console.error(err)
       else console.log('created upload directory!')
@@ -40,7 +31,6 @@ router.post('/make_dir', jsonParser, function(req, res) {
 })
 
 router.post('/remove_list_number', jsonParser, function (req, res) {
-  console.log('removing list number')
   if (!req.body) return res.sendStatus(400)
   // write over order tracker in req.body
   var list_number = req.body['list_number'];
@@ -65,7 +55,6 @@ router.post('/endpoint', function(req, res){
 
 // //handle post request when user finishes the task
 router.post('/submit', jsonParser, function (req, res) {
-  console.log('submit post received');
   if (!req.body) return res.sendStatus(400);
   var list_number = req.body['list_number'];
   var order_dict = JSON.parse(fs.readFileSync('public/order_list_generator.json', 'utf8'));
@@ -101,7 +90,6 @@ function uploadFile(request, response) {
     form.parse(request, function(err, fields, files) {
       var file = util.inspect(files);
       response.writeHead(200, getHeaders('Content-Type', 'application/json'));
-      //var fileName = file.split('path:')[1].split('\',')[0].split(dir)[1].toString().replace(/\\/g, '').replace(/\//g, '');
       var fileName = file.split('name:')[1].split(',')[0].toString().replace(',', '').replace(/\s/g, '').replace(/'/g, '');
       var fileURL = 'https://' + app.address + ':' + port + '/uploads/' + fileName;
       console.log('fileURL: ', fileURL);

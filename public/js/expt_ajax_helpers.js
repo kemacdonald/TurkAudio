@@ -52,13 +52,14 @@ function get_list_of_orders_ajax(list_number) {
 };
 
 function create_upload_dir_ajax(list_number) {
-  person_key = "person"+list_number
+  var person_key = "person"+list_number
   $.ajax({
     dataType: "json",
     type: "POST",
     url: "make_dir",
     contentType: "application/json; charset=utf-8",
-    data: JSON.stringify({"dir_name":person_key}),
+    data: JSON.stringify({"dir_name":person_key,
+                      "turk_id":turk.workerId}),
   });
 }
 
