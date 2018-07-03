@@ -1,3 +1,7 @@
+#!/usr/bin/env node
+
+/* turk_app.js  */
+
 var express = require('express'),
   fs = require('fs'),
   path = require('path'),
@@ -7,20 +11,16 @@ var express = require('express'),
   util = require('util'),
   helmet = require('helmet'),
   bodyParser = require('body-parser'),
-  _ = require('underscore'),
-  app = express(),
-  router = express.Router()
+  app = express()
 
 // define port to listen on
 var port = 8080;
-var jsonParser = bodyParser.json()
 
 // keep all security middleware except frameguard
 // since we want display on Mturk as iframe
 app.use(helmet({frameguard: false}));
 
-//tell express that public is the root of our public web folder
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
 router.post('/make_dir', jsonParser, function(req, res) {
   var dir_path = "./uploads/"+req.body['dir_name'] + "_" + req.body['turk_id'];
@@ -33,24 +33,21 @@ router.post('/make_dir', jsonParser, function(req, res) {
 router.post('/remove_list_number', jsonParser, function (req, res) {
   if (!req.body) return res.sendStatus(400)
   // write over order tracker in req.body
-  var list_number = req.body['list_number'];
-  //console.log(list_number);
-  // read current order list tracker
-  var old_order_dict = JSON.parse(fs.readFileSync('public/order_list_generator.json', 'utf8'));
-  // filter the current list number out of data storage
-  var new_order_array = _.filter(old_order_dict["list_number_generator"], function(num){ return num != list_number; })
-  old_order_dict["list_number_generator"] = new_order_array;
-  //console.log(old_order_dict["list_number_generator"] == list_number);
-  var new_json =  JSON.stringify(old_order_dict);
-  // rewrite order object to disk removing the current participants list number from the pool
-  fs.writeFile("public/order_list_generator.json", new_json, 'utf8', function (err) {
-       if (err) {return console.log(err);} console.log("The file was saved!");
-   });
-});
+  list_number = JSON.stringify(req.body);
 
-// handle post request when user uploads audio files
-router.post('/endpoint', function(req, res){
-  uploadFile(req, res);
+  // read current order list tracker
+  var old_tracker;
+  fs.readFile('public/order_lists.json', 'utf8', function (err, data) {
+    if (err) throw err;
+    old_tracker = JSON.parse(data);
+  });
+
+  // filter the current list number out of data storage
+  new_order_obj = _.filter(old_tracker["list_number_generator"], function(num){ return num != list_number['list_number']; })
+
+  fs.writeFile("public/order_lists_new.json", new_order_obj, 'utf8', function (err) {
+      if (err) {return console.log(err);} console.log("The file was saved!");
+  });
 })
 
 // //handle post request when user finishes the task
@@ -82,9 +79,7 @@ function uploadFile(request, response) {
     form.multiples = false;
     // change the file path to use the fileName in the uploaded data
     form.on('fileBegin', function(name, file) {
-      person_dir = dir + file.name.slice(0, file.name.indexOf("_")) + '/'
-      file.path = __dirname + person_dir + file.name;
-      console.log("the file path is: " + file.path )
+      file.path = __dirname + dir + file.name;
     });
 
     form.parse(request, function(err, fields, files) {
