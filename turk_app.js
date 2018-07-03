@@ -1,3 +1,7 @@
+#!/usr/bin/env node
+
+/* turk_app.js  */
+
 var express = require('express'),
   fs = require('fs'),
   path = require('path'),
@@ -5,9 +9,9 @@ var express = require('express'),
   url = require('url'),
   formidable = require('formidable'),
   util = require('util'),
+  _ = require('underscore'),
   helmet = require('helmet'),
   bodyParser = require('body-parser'),
-  _ = require('underscore'),
   app = express(),
   router = express.Router()
 
@@ -17,13 +21,21 @@ var jsonParser = bodyParser.json()
 
 // keep all security middleware except frameguard
 // since we want display on Mturk as iframe
-app.use(helmet({frameguard: false}));
+app.use(helmet({
+  frameguard: false
+}));
 
 //tell express that public is the root of our public web folder
 app.use(express.static(path.join(__dirname, 'public')));
 
+// handle routing requests
+router.use(function (req, res, next) {
+  next()
+})
+
 router.post('/make_dir', jsonParser, function(req, res) {
-  var dir_path = "./uploads/"+req.body['dir_name'] + "_" + req.body['turk_id'];
+  console.log(req.body['dir_name'])
+  var dir_path = "./uploads/"+req.body['dir_name'];
   mkdirp(dir_path, function(err) {
     if (err) console.error(err)
       else console.log('created upload directory!')
@@ -31,6 +43,7 @@ router.post('/make_dir', jsonParser, function(req, res) {
 })
 
 router.post('/remove_list_number', jsonParser, function (req, res) {
+  console.log('removing list number')
   if (!req.body) return res.sendStatus(400)
   // write over order tracker in req.body
   var list_number = req.body['list_number'];
@@ -48,13 +61,8 @@ router.post('/remove_list_number', jsonParser, function (req, res) {
    });
 });
 
-// handle post request when user uploads audio files
-router.post('/endpoint', function(req, res){
-  uploadFile(req, res);
-})
-
-// //handle post request when user finishes the task
 router.post('/submit', jsonParser, function (req, res) {
+  console.log('submit post received');
   if (!req.body) return res.sendStatus(400);
   var list_number = req.body['list_number'];
   var order_dict = JSON.parse(fs.readFileSync('public/order_list_generator.json', 'utf8'));
@@ -69,52 +77,3 @@ router.post('/submit', jsonParser, function (req, res) {
 
 app.use('/', router)
 app.listen(port);
-
-// functions for parsing the uploaded data
-function uploadFile(request, response) {
-    // setup form
-    var form = new formidable.IncomingForm();
-    var dir = !!process.platform.match(/^win/) ? '\\uploads\\' : '/uploads/';
-    form.uploadDir = __dirname + dir;
-    form.keepExtensions = true;
-    form.maxFieldsSize = 10 * 1024 * 1024;
-    form.maxFields = 1000;
-    form.multiples = false;
-    // change the file path to use the fileName in the uploaded data
-    form.on('fileBegin', function(name, file) {
-      person_dir = dir + file.name.slice(0, file.name.indexOf("_")) + '/'
-      file.path = __dirname + person_dir + file.name;
-      console.log("the file path is: " + file.path )
-    });
-
-    form.parse(request, function(err, fields, files) {
-      var file = util.inspect(files);
-      response.writeHead(200, getHeaders('Content-Type', 'application/json'));
-      var fileName = file.split('name:')[1].split(',')[0].toString().replace(',', '').replace(/\s/g, '').replace(/'/g, '');
-      var fileURL = 'https://' + app.address + ':' + port + '/uploads/' + fileName;
-      console.log('fileURL: ', fileURL);
-      response.write(JSON.stringify({
-          fileURL: fileURL
-      }));
-      response.end();
-    });
-}
-
-// utility function to get headers from http request
-function getHeaders(opt, val) {
-  try {
-    var headers = {};
-    headers["Access-Control-Allow-Origin"] = "https://secure.seedocnow.com";
-    headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
-    headers["Access-Control-Allow-Credentials"] = true;
-    headers["Access-Control-Max-Age"] = '86400'; // 24 hours
-    headers["Access-Control-Allow-Headers"] = "X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept";
-
-    if (opt) {
-        headers[opt] = val;
-    }
-    return headers;
-  } catch (e) {
-    return {};
-  }
-}

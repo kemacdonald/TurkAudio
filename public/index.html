@@ -14,10 +14,9 @@
   <script src="https://code.jquery.com/jquery-1.12.4.js" defer></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js" defer></script>
   <script src="https://cdn.webrtc-experiment.com/DetectRTC.js" defer></script>
-  <!-- Experiment-specific JavaScript -->
+  <!-- Experiment-specific client-side JavaScript -->
   <script type="text/javascript" src="js/browserCheck.js" defer></script>
   <script type="text/javascript" src="js/mmturkey.js" defer></script>
-  <script type="text/javascript" src="js/expt_recording_helpers.js" defer></script>
   <script type="text/javascript" src="js/expt_ajax_helpers.js" defer></script>
   <script type="text/javascript" src="js/expt_control_flow_helpers.js" defer></script>
   <script type="text/javascript" src="js/expt_control_flow.js" defer></script>
@@ -29,11 +28,11 @@
   <div class="slide" id="introduction">
     <h2>Fast food ordering game</h2>
       <p class="block-text">In this game, we're interested in learning
-      about the different ways that people order food. The task should
-      only take about 15 minutes. Thank you for participating!
+      about how well people followed instructions when they order food. The task should
+      only take about 10 minutes. Thank you for participating!
       </p>
       <p class="block-text">To complete this HIT, you will need to use
-      either Chrome or Firefox and have a working microphone.
+      either Chrome or Firefox and have working speakers.
       </p>
       <button type="button" id="start_button" onclick="this.blur(); exp.init_task_intro()">
       I am using Chrome or Firefox and ready to begin
@@ -52,46 +51,97 @@
   <!-- Task Instructions Slide -->
   <div class="slide" id="instructions">
     <h2>Task Instructions</h2>
-      <p class="block-text">In this task, we want you to imagine that you are in the drive-thru
-      at a fast food restaurant and are about to order some food. We are interested in the
-      wide range of ways people could request food, so feel free to change the way you order each item.
+      <p class="block-text">In this task, we want you to listen to a series of recordings
+      of a person ordering fast food and tell us whether their order <b>matches</b>
+      the order that they were supposed to read.
       </p>
-      <p class="block-text">For each order, you will see a food item, the number of that item you should order,
-      a list of addons or takeoffs for that item, and whether you should "correct" anything in the order.
-      For example, here is an order that contains four different items with one of them being a correction:
+      <p class="block-text">For each order, you will see a table indicating
+      the order that should have been read. Each box in the table will have a food item,
+      the number of that item that should have been ordered,
+      a list of addons or takeoffs that should have been included with that item,
+      and whether there should have been anything "corrected" in the order.<br><br>
+      For example, here is an order table that contains four different items with
+      one of them being a correction:
       </p>
+
       <div><img src="media/example_correction.png" alt="example_order" width="600"></div>
       <audio id="example_audio"></audio>
-      <button type="button" id="play_example" onclick="this.blur(); play_example_audio()">
-      Click here to listen to an example of this order
-      </button>
+
       <p class="block-text">
-        It is important that every order mentions the items in each box.
-        You will receive a <b>15 cent bonus after the task if your orders contain
-        all of the items</b>. Thanks! To complete the task, you will be asked to allow
-        the browser to access your microphone to record your orders.
+      Use the buttons below to listen to examples of a correct and an incorrect recording
+      of this order. The <b>correct recording</b> contains all four items, the correct counts for each item,
+      a correction for the third item, and no extra items. The <b>incorrect recording</b> does not include the two
+      Diet Cokes and it does not include a correction for the three hamburgers.
       </p>
+
+      <table align='center'>
+        <tr>
+          <td>
+            <button type="button" id="correct_example" onclick="this.blur(); play_example_audio('correct')">
+            Click to hear a correct recording
+            </button>
+          </td>
+          <td>
+            <button type="button" id="incorrect_example" onclick="this.blur(); play_example_audio('incorrect')">
+            Click to hear an incorrect recording
+            </button>
+          </td>
+        </tr>
+      </table>
+
+      <p class="block-text">
+      You will score each order as <font color="green"><b>CORRECT</b></font> or <font color="red"><b>INCORRECT</b></font>.<br>
+      If the order was correct, you should press the <font color="green"><b>UP ARROW KEY</b></font>.<br>
+      If the order was incorrect, you should press the <font color="red"><b>DOWN ARROW KEY</b></font>.</br>
+      </p>
+
       <button type="button" id="start_ordering" onClick="exp.init_order_slide()">
-      Click here to start ordering
+      Click here to start the game
       </button>
   </div>
 
-  <!-- Order slide: the workhorse -->
+  <!-- Order comprehension slide: the workhorse -->
   <div class="slide" id="order_slide">
     <table id="progress_table">
         <tr>
           <td><p>Progress:</p></td>
           <td><div class="progress"></div></td>
-          <td><div id="order_text"></div></td>
+          <td>
+            <p class="block-text">
+              To play the recorded order, press the <b>S key</b>  <br>
+              If the order was CORRECT, press the <b>UP ARROW key</b><br>
+              If the order was INCORRECT, press the <b>DOWN ARROW key</b><br>
+              If the order is "blank" (silent) because of a recording error, press the <b>B key</b>
+            </p>
+          </td>
         </tr>
     </table>
     <div id="items_table"></div>
-    <div>
-      <p class="block-text">The <b>LEFT ARROW KEY</b> starts recording. The <b>RIGHT ARROW KEY</b> stops recording.<br>
-        When you stop recording, your order will be uploaded automatically and a new one will appear.</p>
-      <img class="waveform" src="media/waveform.gif" alt="waveform">
-      <div id="upload_text"></div>
-    </div>
+    <audio id="trial_audio"></audio>
+
+    <!-- <div id='errors_form'>
+      <h4>What type of errors did you detect?</h4>
+        <form>
+          <label class="checkbox-inline">
+            <input type="checkbox" value="">Missing items
+          </label>
+          <label class="checkbox-inline">
+            <input type="checkbox" value="">Added extra items
+          </label>
+          <label class="checkbox-inline">
+            <input type="checkbox" value="">Incorrect use of item counts
+          </label>
+          <label class="checkbox-inline">
+            <input type="checkbox" value="">Incorrect use of a correction
+          </label>
+          <p class="block-text"> <b>Other:</b>
+            <input type="text" id="other_error" name="other_error" size="70"><br>
+          </p>
+        </form>
+    </div> -->
+
+    <div><p id="feedback_text"></p></div>
+    <img class="waveform" src="media/waveform.gif" alt="waveform">
   </div>
 
   <!-- Closing Q&A slide -->
@@ -99,15 +149,9 @@
     <h2>Feedback</h2>
     <p class="block-text"> Please answer the following questions to help us
     improve our task. Thank you! <p>
-    <p class="block-text" name="language">
-      What was the first language that you learned? <br>
-      <input type="text" id="language" name="language" size="70"><br>
-      Do you speak any other languages? <br>
-      <input type="text" id="other_languages" name="other_languages" size="70"><br>
-      At what age in years did you first learn English? (0 = from birth)<br>
-      <input type="text" id="age_exposure" name="age_exposure" size="70"><br>
-      How many years have you been speaking English? <br>
-      <input type="text" id="years_english" name="years_english" size="70"><br>
+    <p class="block-text" name="error_types">
+      If there were mistakes in the orders, generally what kind of mistakes were made?<br>
+      <input type="text" id="error_types" name="error_types" size="70"><br>
       Was there anything broken or that could be improved? <br>
       <input type="text" id="comments" name="comments" size="70"><br>
       What is your age in years? <br>

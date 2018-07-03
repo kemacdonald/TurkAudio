@@ -11,7 +11,7 @@ function remove_list_number_ajax(list_number) {
   });
 }
 
-function generate_list_of_orders_ajax() {
+function generate_list_of_orders_ajax(shuffle, prop_sample) {
   $.ajax({
     dataType: "json",
     url: 'order_list_generator.json',
@@ -28,21 +28,20 @@ function generate_list_of_orders_ajax() {
         list_number = random(n_orders_list_min, n_orders_list_max).toString();
       }
       get_list_of_orders_ajax(list_number);
+      get_order_keys(list_number, shuffle, prop_sample)
     }
   });
 }
 
-// Function to make the AJAX request to get the list of orders for this turker
+// AJAX request to get the list of orders for this turker
 function get_list_of_orders_ajax(list_number) {
   var order_url = "order_lists/person" + list_number + ".json";
   $.ajax({
     dataType: "json",
     url: order_url,
     success: function (data) {
-      console.log("Successfully initiated experiment")
+      console.log("Successfully got list of order instructions.")
       list_of_orders = data;
-      order_keys = _.keys(list_of_orders);
-      n_trials = _.size(list_of_orders)
     },
     error: function(xhr, status, error) {
       var err = eval("(" + xhr.responseText + ")");
@@ -51,15 +50,38 @@ function get_list_of_orders_ajax(list_number) {
   });
 };
 
+// AJAX request to get list of order keys
+// shuffles the order of keys for randomization of experiment
+// samples a user-specified subset of the orders based on prop_sample
+
+function get_order_keys(list_number, shuffle, prop_sample) {
+  $.ajax({
+    dataType: "json",
+    url: 'order_keys_comprehension.json',
+    success: function (data) {
+      console.log("Successfully got order keys")
+      order_keys_dict = data;
+      var person_key = "person"+list_number;
+      order_keys = order_keys_dict[person_key]
+      var sample_size = Math.floor(_.size(order_keys) * prop_sample);
+      order_keys = _.sample(order_keys, sample_size);
+      if(shuffle) {order_keys = _.shuffle(order_keys);}
+    },
+    error: function(xhr, status, error) {
+      var err = eval("(" + xhr.responseText + ")");
+      console.log(err.Message);
+    }
+  });
+}
+
 function create_upload_dir_ajax(list_number) {
-  var person_key = "person"+list_number
+  person_key = "person"+list_number
   $.ajax({
     dataType: "json",
     type: "POST",
     url: "make_dir",
     contentType: "application/json; charset=utf-8",
-    data: JSON.stringify({"dir_name":person_key,
-                      "turk_id":turk.workerId}),
+    data: JSON.stringify({"dir_name":person_key}),
   });
 }
 

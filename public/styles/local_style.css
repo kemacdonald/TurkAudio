@@ -95,11 +95,6 @@ button:active {
   width:200px;
   visibility: hidden;
 }
-img.waveform {
-  width:300px;
-  height:80px;
-  visibility: hidden;
-}
 
 #legal {
   margin: 0 auto;
@@ -124,6 +119,13 @@ img.waveform {
   margin-right:auto;
 }
 
+#errors_form {
+  padding-top: 5em;
+  margin-left:auto;
+  margin-right:auto;
+  visibility: hidden;
+}
+
 #items_table td {
 	text-align: center;
 	vertical-align: text-top;
@@ -133,9 +135,20 @@ img.waveform {
 	padding: 10px;
 }
 
+#feedback_text {
+  font-size: 20px;
+  margin-top: 2em;
+}
+
 #order_text p {
 	width: 400px;
   text-align: justify;
   margin: 0 auto;
   margin-bottom: 1em;
+}
+
+img.waveform {
+  margin-top: 1em;
+  width:300px;
+  height:80px;
 }

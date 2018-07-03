@@ -1,14 +1,16 @@
-"""
+'''
 Short script to generate list assignments
-data structure for turk audio data collection.
+data structure for turk comprehension data collection.
 The goal is to ensure that we have a one-to-one
-mapping of order lists to participants.
-"""
+mapping of audio files to turkers.
+'''
 import json
+import os
+import re
 
-n_orders_start = 20
-n_orders_end = 80
-list_generator = list(range(n_orders_start+1, n_orders_end+1))
+dir = '../public/media'
+person_dirs = [ name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name)) ]
+list_generator = [dir.replace("person", "") for dir in person_dirs]
 
 list_generator_dict = {
   'list_number_generator': list_generator,
