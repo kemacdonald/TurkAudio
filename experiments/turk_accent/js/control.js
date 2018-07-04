@@ -2,7 +2,6 @@
 // These functions help with setting up and taking down 'slides' for the web app
 var record = require('./recording.js')
 
-
 // get and play example audio of an order
 function play_example_audio() {
   audio = $('#example_audio')
@@ -61,10 +60,10 @@ function init_order(app) {
 
 // advances the experiment
 function advance_exp(app) {
+  $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
   var delay = 1000
   setTimeout(function(){
     build_prompt(app);
-    $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
   }, delay);
 }
 
@@ -75,10 +74,9 @@ function get_list_number(order_key) {
 
 // gets the next order key from the list of order_keys
 function get_next_order(app) {
-  console.log(app.state.key_list)
   // if order keys is empty, we are done and end the experiment
   if( _.isEmpty(app.state.key_list) ) {
-    setTimeout(function(){ exp.init_final_slide();}, 1000); // add some delay before showing final slide
+    setTimeout(function(){exp.init_final_slide();}, 1000); // add some delay before showing final slide
   } else {
     return app.state.key_list.shift();
   }

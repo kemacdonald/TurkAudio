@@ -45,7 +45,7 @@ def txt_to_dict(raw_text, n_items_eval = 100):
 
 ## read and build data dictionary, evaluation keys, and training training_keys
 random.seed(7)
-d_txt = file_read_from_head('commonvoice_sentences.txt', nlines = 1000)
+d_txt = file_read_from_head('commonvoice_sentences.txt', nlines = 190000)
 d_dict, eval_keys, training_keys = txt_to_dict(d_txt, n_items_eval = 100)
 
 ## save the structured data as json

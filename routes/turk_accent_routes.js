@@ -6,7 +6,9 @@ var express = require('express'),
   util = require('util'),
   bodyParser = require('body-parser'),
   _ = require('underscore'),
-  uploads = require('../custom_modules/uploads'),
+  formidable = require('formidable'),
+  path = require('path'),
+  util = require('util'),
   router = express.Router()
 
 var jsonParser = bodyParser.json()
@@ -20,9 +22,9 @@ router.get('/sentence_dict', jsonParser, function(req, res) {
   var eval_keys_path = path.join('experiments', 'turk_accent', 'data_model', 'eval_keys.json');
   var training_keys_path = path.join('experiments', 'turk_accent', 'data_model', 'training_keys.json');
   var eval_keys = JSON.parse(fs.readFileSync(eval_keys_path, 'utf8'));
-  var eval_keys_sample = _.sample(eval_keys, app.state.n_eval_trials);
+  var eval_keys_sample = _.sample(eval_keys, app.config.n_eval_trials);
   var training_keys = JSON.parse(fs.readFileSync(training_keys_path, 'utf8'));
-  var training_keys_sample = _.sample(training_keys, app.state.n_training_trials);
+  var training_keys_sample = _.sample(training_keys, app.config.n_training_trials);
   // add to app
   app.state.training_keys = training_keys_sample;
   app.state.eval_keys = eval_keys_sample;
@@ -69,7 +71,19 @@ router.post('/remove_list_number', jsonParser, function (req, res) {
 
 // handle post request when user uploads audio files
 router.post('/endpoint', function(req, res){
-  uploads.uploadFile(req, res);
+  var form = new formidable.IncomingForm();
+  form.keepExtensions = true;
+  form.maxFieldsSize = 10 * 1024 * 1024;
+  form.maxFields = 1000;
+  form.multiples = false;
+  // parse data
+  form.parse(req);
+  // save to server
+  form.on('fileBegin', function(name, file) {
+    var person_dir = 'turker_' + file.name.split('_')[1].replace('.webm', '') + "/"
+    file.path = './uploads/' + person_dir + file.name;
+    res.end();
+  });
 })
 
 // //handle post request when user finishes the task

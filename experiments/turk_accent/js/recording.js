@@ -17,21 +17,15 @@ function init_audio_recording(app) {
   });
 }
 
-module.exports = {
-  init_audio_recording: init_audio_recording,
-  startRecording: startRecording,
-  stopRecording: stopRecording
-}
-
 // what to do once recording is ready
 function onRecordingReady(e) {
   var control = require('./control')
   uploadBlob(e.data, e.target.app);
-  // if(!_.isEmpty(turk.workerId)) {
-  //   uploadBlob(e.data);
-  // } else {
-  //   console.log('Not a turker, so no upload initiated')
-  // };
+  if(!_.isEmpty(turk.workerId)) {
+    uploadBlob(e.data, e.target.app);
+  } else {
+    console.log('Not a turker, so no upload initiated')
+  };
   // initialize the next order after the recording has been uploaded
   control.init_order(e.target.app);
 }
@@ -44,8 +38,6 @@ function startRecording() {
 function stopRecording() {
   $(`img.waveform`).css('visibility', 'hidden')
   $("#upload_text").html('<font color="green">' +'<b>Upload successful</b>' + '</font>');
-  // Stopping the recorder will eventually trigger the `dataavailable`
-  // event and we can complete the recording process
   recorder.stop();
 }
 
@@ -60,6 +52,11 @@ function uploadBlob(blob, app) {
   });
   formData.append('video-blob', fileObject);
   formData.append('video-filename', fileObject.name);
-  // send the form to the server
   ajax.upload_audio(formData);
+}
+
+module.exports = {
+  init_audio_recording: init_audio_recording,
+  startRecording: startRecording,
+  stopRecording: stopRecording
 }

@@ -13,11 +13,10 @@ function onRTCready(app, turk) {
     browser: browser.name,
     browser_height: $(window).height(),
     browser_width: $(window).width(),
-    audio_input_devices: DetectRTC.audioInputDevices,
-    audio_output_devices: DetectRTC.audioOutputDevices,
     screen_width: screen.width,
     screen_height: screen.height,
     mobile_device: /Mobi/.test(navigator.userAgent),
+    ip: app.ip,
     first_language: "",
     age_exposure_eng: "",
     country: "",
@@ -33,7 +32,6 @@ function onRTCready(app, turk) {
     play_example_audio: function() {
       control.play_example_audio();
     },
-    // init the intro slide
     init_task_intro: function() {
       if(turk.previewMode) {
         alert("Please accept the HIT to view")
@@ -50,28 +48,22 @@ function onRTCready(app, turk) {
         }
       }
     },
-    // init the ordering slide
     init_order_slide: function() {
-      control.init_progress_bar(app)
-      $('#example_audio').trigger('pause'); // pause any audio that might still be playing
-      $(".progress").attr("style", "visibility: visible"); // make the progress bar visible
-      // if(!_.isEmpty(turk.workerId) & !turk.previewMode){
-      //   create_upload_dir_ajax(list_number, turk.workerId) ; // create an upload directory if this is a turker
-      //   remove_list_number_ajax(list_number); // remove the oreder list from the pool
-      // }
-      ajax.create_upload_dir(turk.workerId) ; // create an upload directory if this is a turker
-      control.init_order(app); // creates an order (see expt_helpers.js)
-      control.bind_keyboard_events(); // binds the left and right arrows to control the recorder
-      record.init_audio_recording(app); // note that this function also starts the experiment once the recorder objects has been created
+      control.init_progress_bar(app);
+      $('#example_audio').trigger('pause');
+      $(".progress").attr("style", "visibility: visible");
+      ajax.create_upload_dir(turk.workerId);
+      control.init_order(app);
+      control.bind_keyboard_events();
+      record.init_audio_recording(app);
     },
-
     init_final_slide: function() {
       control.unbind_keyboard_events();
       control.showSlide('final_questions');
     },
 
     check_final_slide: function() {
-      if (_.isEmpty($("#language").val())) {
+      if ( _.isEmpty($("#language").val()) || _.isEmpty($("#country").val()) || _.isEmpty($("#us_state").val()) ) {
         $("#checkMessage").html('<font color="red">' + '<b>Please make sure you have answered all of the questions. Thank you!</b>' + '</font>');
       } else {
         console.log('all necessary fields entered, ending HIT')
@@ -84,7 +76,7 @@ function onRTCready(app, turk) {
         exp.age = document.getElementById("age").value;
         exp.gender = document.getElementById("gender").value;
         control.showSlide("finished");
-        ajax.end_and_submit_exp(); // send data to server
+        ajax.end_and_submit_exp();
       }
     }
   };

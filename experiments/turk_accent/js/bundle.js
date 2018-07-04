@@ -16,52 +16,52 @@ function configure_app(app, callback) {
   });
 }
 
-// // Removes current list number from the pool of possible list numbers
-// function remove_list_number_ajax(list_number) {
-//   $.ajax({
-//     type: "POST",
-//     contentType: "application/json; charset=utf-8",
-//     url: "turk_accent_routes/remove_list_number",
-//     data: JSON.stringify({list_number}),
-//     dataType: "json"
-//   });
-// }
+// Removes current list number from the pool of possible list numbers
+function remove_list_number_ajax(list_number) {
+  $.ajax({
+    type: "POST",
+    contentType: "application/json; charset=utf-8",
+    url: "turk_accent_routes/remove_list_number",
+    data: JSON.stringify({list_number}),
+    dataType: "json"
+  });
+}
 
-// // request to get the list of orders for this turker
-// function get_eval_keys_ajax(app) {
-//   var order_url = "data_model/eval_keys.json";
-//   $.ajax({
-//     dataType: "json",
-//     url: order_url,
-//     success: function (data) {
-//       console.log("Successfully retrieved evaluation keys")
-//       app.config.eval_keys = data;
-//     },
-//     error: function(xhr, status, error) {
-//       var err = eval("(" + xhr.responseText + ")");
-//       console.log(err.Message);
-//     }
-//   });
-// };
-//
-// // request to get the list of orders for this turker
-// function get_training_keys_ajax(app) {
-//   var order_url = "data_model/training_keys.json";
-//   $.ajax({
-//     dataType: "json",
-//     url: order_url,
-//     success: function (data) {
-//       console.log("Successfully training_keys evaluation keys")
-//       training_keys_sample = _.sample(data, app.config.n_training_trials);
-//       app.config.training_keys = training_keys_sample;
-//       app.config.n_trials = app.config.n_eval_trials + app.config.n_training_trials
-//     },
-//     error: function(xhr, status, error) {
-//       var err = eval("(" + xhr.responseText + ")");
-//       console.log(err.Message);
-//     }
-//   });
-// };
+// request to get the list of orders for this turker
+function get_eval_keys_ajax(app) {
+  var order_url = "data_model/eval_keys.json";
+  $.ajax({
+    dataType: "json",
+    url: order_url,
+    success: function (data) {
+      console.log("Successfully retrieved evaluation keys")
+      app.config.eval_keys = data;
+    },
+    error: function(xhr, status, error) {
+      var err = eval("(" + xhr.responseText + ")");
+      console.log(err.Message);
+    }
+  });
+};
+
+// request to get the list of orders for this turker
+function get_training_keys_ajax(app) {
+  var order_url = "data_model/training_keys.json";
+  $.ajax({
+    dataType: "json",
+    url: order_url,
+    success: function (data) {
+      console.log("Successfully training_keys evaluation keys")
+      training_keys_sample = _.sample(data, app.config.n_training_trials);
+      app.config.training_keys = training_keys_sample;
+      app.config.n_trials = app.config.n_eval_trials + app.config.n_training_trials
+    },
+    error: function(xhr, status, error) {
+      var err = eval("(" + xhr.responseText + ")");
+      console.log(err.Message);
+    }
+  });
+};
 
 // request to create the directory to store audio file uploads
 function create_upload_dir_ajax(turk_id) {
@@ -111,9 +111,11 @@ module.exports = {
 
 },{"./control":4}],2:[function(require,module,exports){
 // APP Config
+var $ = require('jquery')
+
 var app = {
-  config: {n_eval_trials: 5,
-    n_training_trials: 5,
+  config: {n_eval_trials: 25,
+    n_training_trials: 25,
   },
   state: {
     n_trials: "",
@@ -123,12 +125,17 @@ var app = {
     key_list: "",
     current_sentence_key: "",
     current_sentence_key_type: ""
-  }
+  },
+  ip: ""
 }
+// get client's ip information
+$.getJSON('https://ipapi.co/json/', function(data) {
+  app.ip = JSON.stringify(data, null, 2);
+});
 
 module.exports = app
 
-},{}],3:[function(require,module,exports){
+},{"jquery":12}],3:[function(require,module,exports){
 // Tiny module te get browser information
 const { detect } = require('detect-browser');
 const browser = detect();
@@ -138,7 +145,6 @@ module.exports = browser;
 // MODULE WITH FUNCTIONS FOR CONTROLLING THE FLOW OF THE EXPERIMENT
 // These functions help with setting up and taking down 'slides' for the web app
 var record = require('./recording.js')
-
 
 // get and play example audio of an order
 function play_example_audio() {
@@ -198,10 +204,10 @@ function init_order(app) {
 
 // advances the experiment
 function advance_exp(app) {
+  $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
   var delay = 1000
   setTimeout(function(){
     build_prompt(app);
-    $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
   }, delay);
 }
 
@@ -212,10 +218,9 @@ function get_list_number(order_key) {
 
 // gets the next order key from the list of order_keys
 function get_next_order(app) {
-  console.log(app.state.key_list)
   // if order keys is empty, we are done and end the experiment
   if( _.isEmpty(app.state.key_list) ) {
-    setTimeout(function(){ exp.init_final_slide();}, 1000); // add some delay before showing final slide
+    setTimeout(function(){exp.init_final_slide();}, 1000); // add some delay before showing final slide
   } else {
     return app.state.key_list.shift();
   }
@@ -288,11 +293,10 @@ function onRTCready(app, turk) {
     browser: browser.name,
     browser_height: $(window).height(),
     browser_width: $(window).width(),
-    audio_input_devices: DetectRTC.audioInputDevices,
-    audio_output_devices: DetectRTC.audioOutputDevices,
     screen_width: screen.width,
     screen_height: screen.height,
     mobile_device: /Mobi/.test(navigator.userAgent),
+    ip: app.ip,
     first_language: "",
     age_exposure_eng: "",
     country: "",
@@ -308,7 +312,6 @@ function onRTCready(app, turk) {
     play_example_audio: function() {
       control.play_example_audio();
     },
-    // init the intro slide
     init_task_intro: function() {
       if(turk.previewMode) {
         alert("Please accept the HIT to view")
@@ -325,28 +328,22 @@ function onRTCready(app, turk) {
         }
       }
     },
-    // init the ordering slide
     init_order_slide: function() {
-      control.init_progress_bar(app)
-      $('#example_audio').trigger('pause'); // pause any audio that might still be playing
-      $(".progress").attr("style", "visibility: visible"); // make the progress bar visible
-      // if(!_.isEmpty(turk.workerId) & !turk.previewMode){
-      //   create_upload_dir_ajax(list_number, turk.workerId) ; // create an upload directory if this is a turker
-      //   remove_list_number_ajax(list_number); // remove the oreder list from the pool
-      // }
-      ajax.create_upload_dir(turk.workerId) ; // create an upload directory if this is a turker
-      control.init_order(app); // creates an order (see expt_helpers.js)
-      control.bind_keyboard_events(); // binds the left and right arrows to control the recorder
-      record.init_audio_recording(app); // note that this function also starts the experiment once the recorder objects has been created
+      control.init_progress_bar(app);
+      $('#example_audio').trigger('pause');
+      $(".progress").attr("style", "visibility: visible");
+      ajax.create_upload_dir(turk.workerId);
+      control.init_order(app);
+      control.bind_keyboard_events();
+      record.init_audio_recording(app);
     },
-
     init_final_slide: function() {
       control.unbind_keyboard_events();
       control.showSlide('final_questions');
     },
 
     check_final_slide: function() {
-      if (_.isEmpty($("#language").val())) {
+      if ( _.isEmpty($("#language").val()) || _.isEmpty($("#country").val()) || _.isEmpty($("#us_state").val()) ) {
         $("#checkMessage").html('<font color="red">' + '<b>Please make sure you have answered all of the questions. Thank you!</b>' + '</font>');
       } else {
         console.log('all necessary fields entered, ending HIT')
@@ -359,7 +356,7 @@ function onRTCready(app, turk) {
         exp.age = document.getElementById("age").value;
         exp.gender = document.getElementById("gender").value;
         control.showSlide("finished");
-        ajax.end_and_submit_exp(); // send data to server
+        ajax.end_and_submit_exp();
       }
     }
   };
@@ -615,21 +612,15 @@ function init_audio_recording(app) {
   });
 }
 
-module.exports = {
-  init_audio_recording: init_audio_recording,
-  startRecording: startRecording,
-  stopRecording: stopRecording
-}
-
 // what to do once recording is ready
 function onRecordingReady(e) {
   var control = require('./control')
   uploadBlob(e.data, e.target.app);
-  // if(!_.isEmpty(turk.workerId)) {
-  //   uploadBlob(e.data);
-  // } else {
-  //   console.log('Not a turker, so no upload initiated')
-  // };
+  if(!_.isEmpty(turk.workerId)) {
+    uploadBlob(e.data, e.target.app);
+  } else {
+    console.log('Not a turker, so no upload initiated')
+  };
   // initialize the next order after the recording has been uploaded
   control.init_order(e.target.app);
 }
@@ -642,8 +633,6 @@ function startRecording() {
 function stopRecording() {
   $(`img.waveform`).css('visibility', 'hidden')
   $("#upload_text").html('<font color="green">' +'<b>Upload successful</b>' + '</font>');
-  // Stopping the recorder will eventually trigger the `dataavailable`
-  // event and we can complete the recording process
   recorder.stop();
 }
 
@@ -658,8 +647,13 @@ function uploadBlob(blob, app) {
   });
   formData.append('video-blob', fileObject);
   formData.append('video-filename', fileObject.name);
-  // send the form to the server
   ajax.upload_audio(formData);
+}
+
+module.exports = {
+  init_audio_recording: init_audio_recording,
+  startRecording: startRecording,
+  stopRecording: stopRecording
 }
 
 },{"./ajax":1,"./control":4}],9:[function(require,module,exports){
