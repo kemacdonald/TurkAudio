@@ -1,9 +1,9 @@
-// APP Config
+// MODULE FOR INITIAL APP CONFIGURATION
 var $ = require('jquery')
 
 var app = {
-  config: {n_eval_trials: 25,
-    n_training_trials: 25,
+  config: {n_eval_trials: 5,
+    n_training_trials: 5,
   },
   state: {
     n_trials: "",
@@ -16,7 +16,7 @@ var app = {
   },
   ip: ""
 }
-// get client's ip information
+// get client's ip information and store in app object
 $.getJSON('https://ipapi.co/json/', function(data) {
   app.ip = JSON.stringify(data, null, 2);
 });

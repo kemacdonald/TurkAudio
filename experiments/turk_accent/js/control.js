@@ -1,5 +1,4 @@
-// MODULE WITH FUNCTIONS FOR CONTROLLING THE FLOW OF THE EXPERIMENT
-// These functions help with setting up and taking down 'slides' for the web app
+// MODULE WITH HELPERS FOR CONTROLLING FLOW OF THE EXPERIMENT
 var record = require('./recording.js')
 
 // get and play example audio of an order
@@ -28,6 +27,12 @@ function showSlide(id) {
   $("#"+id).show();
 }
 
+// stops audio from prior trial and shows progress bar
+function clean_trial_slide() {
+  $('#example_audio').trigger('pause');
+  $(".progress").attr("style", "visibility: visible");
+}
+
 // bind start and stop recording to keyboard events
 function bind_keyboard_events() {
   $(document).keyup(function(event) {
@@ -53,6 +58,7 @@ function unbind_keyboard_events() {
 
 // builds the order based on the order key and the order instructions
 function init_order(app) {
+  increment_progress_bar(app)
   app.state.current_sentence_key = get_next_order(app);
   console.log("current order key is: " + app.state.current_sentence_key)
   if (!_.isUndefined(app.state.current_sentence_key)){advance_exp(app)};
@@ -60,11 +66,16 @@ function init_order(app) {
 
 // advances the experiment
 function advance_exp(app) {
-  $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
   var delay = 1000
   setTimeout(function(){
     build_prompt(app);
   }, delay);
+}
+
+function increment_progress_bar(app) {
+  if(app.state.key_list.length < app.state.n_trials) {
+    $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
+  }
 }
 
 // extracts the order list number from the order key
@@ -130,5 +141,6 @@ module.exports = {
   get_next_order: get_next_order,
   get_item_html: get_item_html,
   build_item_table: build_item_table,
-  init_progress_bar: init_progress_bar
+  init_progress_bar: init_progress_bar,
+  clean_trial_slide: clean_trial_slide
 };

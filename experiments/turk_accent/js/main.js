@@ -1,4 +1,4 @@
-// EXPERIMENT SETUP
+// MAIN JS -- CONFIGURE APP AND START EXPERIMENT
 global.jQuery = require('jquery');
 
 var ajax = require('./ajax'),

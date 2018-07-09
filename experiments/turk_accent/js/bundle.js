@@ -1,5 +1,5 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-//HELPER FUNCTIONS FOR CLIENT-SERVER COMMUNICATION DURING THE EXPERIMENT
+// MODULE WITH FUNCTIONS FOR CLIENT-SERVER COMMUNICATION DURING THE EXPERIMENT
 var control = require('./control')
 
 function configure_app(app, callback) {
@@ -110,12 +110,12 @@ module.exports = {
 };
 
 },{"./control":4}],2:[function(require,module,exports){
-// APP Config
+// MODULE FOR INITIAL APP CONFIGURATION
 var $ = require('jquery')
 
 var app = {
-  config: {n_eval_trials: 25,
-    n_training_trials: 25,
+  config: {n_eval_trials: 5,
+    n_training_trials: 5,
   },
   state: {
     n_trials: "",
@@ -128,7 +128,7 @@ var app = {
   },
   ip: ""
 }
-// get client's ip information
+// get client's ip information and store in app object
 $.getJSON('https://ipapi.co/json/', function(data) {
   app.ip = JSON.stringify(data, null, 2);
 });
@@ -136,14 +136,13 @@ $.getJSON('https://ipapi.co/json/', function(data) {
 module.exports = app
 
 },{"jquery":12}],3:[function(require,module,exports){
-// Tiny module te get browser information
+// // MODULE THAT EXPORTS CLIENT'S BROWSER CONFIGURATION
 const { detect } = require('detect-browser');
 const browser = detect();
 module.exports = browser;
 
 },{"detect-browser":9}],4:[function(require,module,exports){
-// MODULE WITH FUNCTIONS FOR CONTROLLING THE FLOW OF THE EXPERIMENT
-// These functions help with setting up and taking down 'slides' for the web app
+// MODULE WITH HELPERS FOR CONTROLLING FLOW OF THE EXPERIMENT
 var record = require('./recording.js')
 
 // get and play example audio of an order
@@ -172,6 +171,12 @@ function showSlide(id) {
   $("#"+id).show();
 }
 
+// stops audio from prior trial and shows progress bar
+function clean_trial_slide() {
+  $('#example_audio').trigger('pause');
+  $(".progress").attr("style", "visibility: visible");
+}
+
 // bind start and stop recording to keyboard events
 function bind_keyboard_events() {
   $(document).keyup(function(event) {
@@ -197,6 +202,7 @@ function unbind_keyboard_events() {
 
 // builds the order based on the order key and the order instructions
 function init_order(app) {
+  increment_progress_bar(app)
   app.state.current_sentence_key = get_next_order(app);
   console.log("current order key is: " + app.state.current_sentence_key)
   if (!_.isUndefined(app.state.current_sentence_key)){advance_exp(app)};
@@ -204,11 +210,16 @@ function init_order(app) {
 
 // advances the experiment
 function advance_exp(app) {
-  $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
   var delay = 1000
   setTimeout(function(){
     build_prompt(app);
   }, delay);
+}
+
+function increment_progress_bar(app) {
+  if(app.state.key_list.length < app.state.n_trials) {
+    $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
+  }
 }
 
 // extracts the order list number from the order key
@@ -274,7 +285,8 @@ module.exports = {
   get_next_order: get_next_order,
   get_item_html: get_item_html,
   build_item_table: build_item_table,
-  init_progress_bar: init_progress_bar
+  init_progress_bar: init_progress_bar,
+  clean_trial_slide: clean_trial_slide
 };
 
 },{"./recording.js":8}],5:[function(require,module,exports){
@@ -290,6 +302,7 @@ var DetectRTC = require('detectrtc'),
 // the flow of the task
 function onRTCready(app, turk) {
   exp = {
+    turker_id: turk.workerId,
     browser: browser.name,
     browser_height: $(window).height(),
     browser_width: $(window).width(),
@@ -297,6 +310,8 @@ function onRTCready(app, turk) {
     screen_height: screen.height,
     mobile_device: /Mobi/.test(navigator.userAgent),
     ip: app.ip,
+    webrtc: DetectRTC,
+    sentence_dict: app.state.sentence_dict,
     first_language: "",
     age_exposure_eng: "",
     country: "",
@@ -308,7 +323,6 @@ function onRTCready(app, turk) {
     start_time: "",
     end_time: "",
     completion_time: "",
-
     play_example_audio: function() {
       control.play_example_audio();
     },
@@ -316,42 +330,41 @@ function onRTCready(app, turk) {
       if(turk.previewMode) {
         alert("Please accept the HIT to view")
         control.showSlide('introduction')
+      } else if (DetectRTC.isWebRTCSupported === false || DetectRTC.hasMicrophone === false) {
+        alert("This HIT will only work on computers/browsers with a working microphone. Please switch if you would like to accept this HIT. Thanks!");
+          control.showSlide("introduction");
       } else {
-        if (!DetectRTC.isWebRTCSupported) {
-          control.showSlide("instructions");
-          alert("This HIT will only work on computers/browsers with a working microphone. Please switch if you would like to accept this HIT. Thanks!");
-        } else {
-          exp.start_time = new Date();
-          // hide the start ordering button until they listen to the example
-          $('button#start_ordering').hide()
-          control.showSlide('instructions')
-        }
+        exp.start_time = new Date();
+        $('button#start_ordering').hide()
+        control.showSlide('instructions')
       }
     },
     init_order_slide: function() {
-      control.init_progress_bar(app);
-      $('#example_audio').trigger('pause');
-      $(".progress").attr("style", "visibility: visible");
       ajax.create_upload_dir(turk.workerId);
-      control.init_order(app);
+      control.init_progress_bar(app);
+      control.clean_trial_slide();
       control.bind_keyboard_events();
+      control.init_order(app);
       record.init_audio_recording(app);
     },
     init_final_slide: function() {
       control.unbind_keyboard_events();
       control.showSlide('final_questions');
     },
-
     check_final_slide: function() {
-      if ( _.isEmpty($("#language").val()) || _.isEmpty($("#country").val()) || _.isEmpty($("#us_state").val()) ) {
+      var language = document.getElementById("language").value,
+          country = document.getElementById("country").value,
+          state = document.getElementById("state").value,
+          other_langs = document.getElementById("other_languages").value;
+      if (_.isEmpty(language) || _.isEmpty(country) || _.isEmpty(state) || _.isEmpty(other_langs)) {
         $("#checkMessage").html('<font color="red">' + '<b>Please make sure you have answered all of the questions. Thank you!</b>' + '</font>');
       } else {
         console.log('all necessary fields entered, ending HIT')
-        exp.first_language = document.getElementById("language").value;
-        exp.country = document.getElementById("country").value;
-        exp.us_state = document.getElementById("us_state").value;
+        exp.first_language = language;
+        exp.country = country;
+        exp.us_state = state;
         exp.age_exposure_eng = document.getElementById("age_exposure").value;
-        exp.other_langs = document.getElementById("other_languages").value;
+        exp.other_langs = other_langs;
         exp.comment = document.getElementById("comments").value;
         exp.age = document.getElementById("age").value;
         exp.gender = document.getElementById("gender").value;
@@ -361,14 +374,13 @@ function onRTCready(app, turk) {
     }
   };
 };
-
 module.exports = {
   onRTCready: onRTCready
 }
 
 },{"./ajax":1,"./browserCheck":3,"./control":4,"./recording.js":8,"detectrtc":10}],6:[function(require,module,exports){
 (function (global){
-// EXPERIMENT SETUP
+// MAIN JS -- CONFIGURE APP AND START EXPERIMENT
 global.jQuery = require('jquery');
 
 var ajax = require('./ajax'),
@@ -593,19 +605,13 @@ turk = turk || {};
 module.exports = turk
 
 },{}],8:[function(require,module,exports){
-// Module with FUNCTIONS FOR RECORDING AUDIO ON AMT
-
-// construct the audio file name that gets uploaded to AWS
-function make_file_name(current_key) {
-  return current_key.concat('_'+ turk.workerId +'.webm');
-}
+// MODULE WITH FUNCTIONS FOR RECORDING AUDIO ON AMT
 
 // get audio stream from user's mic using WebRTC API
 function init_audio_recording(app) {
   var control = require('./control')
   navigator.mediaDevices.getUserMedia({audio: true}).then(function (stream) {
     recorder = new MediaRecorder(stream);
-    // listen to dataavailable, which gets triggered whenever we have an audio blob available
     recorder.addEventListener('dataavailable', onRecordingReady);
     recorder.app = app;
     setTimeout(function(){control.showSlide('order_slide');}, 1000);
@@ -615,7 +621,6 @@ function init_audio_recording(app) {
 // what to do once recording is ready
 function onRecordingReady(e) {
   var control = require('./control')
-  uploadBlob(e.data, e.target.app);
   if(!_.isEmpty(turk.workerId)) {
     uploadBlob(e.data, e.target.app);
   } else {
@@ -634,6 +639,11 @@ function stopRecording() {
   $(`img.waveform`).css('visibility', 'hidden')
   $("#upload_text").html('<font color="green">' +'<b>Upload successful</b>' + '</font>');
   recorder.stop();
+}
+
+// construct the audio file name that gets uploaded to AWS
+function make_file_name(current_key) {
+  return current_key.concat('_'+ turk.workerId +'.webm');
 }
 
 // upload audio to AWS

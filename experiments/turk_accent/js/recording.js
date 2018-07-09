@@ -1,16 +1,10 @@
-// Module with FUNCTIONS FOR RECORDING AUDIO ON AMT
-
-// construct the audio file name that gets uploaded to AWS
-function make_file_name(current_key) {
-  return current_key.concat('_'+ turk.workerId +'.webm');
-}
+// MODULE WITH FUNCTIONS FOR RECORDING AUDIO ON AMT
 
 // get audio stream from user's mic using WebRTC API
 function init_audio_recording(app) {
   var control = require('./control')
   navigator.mediaDevices.getUserMedia({audio: true}).then(function (stream) {
     recorder = new MediaRecorder(stream);
-    // listen to dataavailable, which gets triggered whenever we have an audio blob available
     recorder.addEventListener('dataavailable', onRecordingReady);
     recorder.app = app;
     setTimeout(function(){control.showSlide('order_slide');}, 1000);
@@ -20,7 +14,6 @@ function init_audio_recording(app) {
 // what to do once recording is ready
 function onRecordingReady(e) {
   var control = require('./control')
-  uploadBlob(e.data, e.target.app);
   if(!_.isEmpty(turk.workerId)) {
     uploadBlob(e.data, e.target.app);
   } else {
@@ -39,6 +32,11 @@ function stopRecording() {
   $(`img.waveform`).css('visibility', 'hidden')
   $("#upload_text").html('<font color="green">' +'<b>Upload successful</b>' + '</font>');
   recorder.stop();
+}
+
+// construct the audio file name that gets uploaded to AWS
+function make_file_name(current_key) {
+  return current_key.concat('_'+ turk.workerId +'.webm');
 }
 
 // upload audio to AWS
