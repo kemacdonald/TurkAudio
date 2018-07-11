@@ -36,7 +36,7 @@ function clean_trial_slide() {
 // bind start and stop recording to keyboard events
 function bind_keyboard_events() {
   $(document).keyup(function(event) {
-      var keys = {"left": 37, "right": 39};
+      var keys = {"left": 37, "right": 39, "down": 40, "up": 38};
        switch(event.which) {
         case keys["left"]:
           record.startRecording();
@@ -46,6 +46,17 @@ function bind_keyboard_events() {
             record.stopRecording();
           }
           break;
+        case keys["down"]:
+          if(recorder.state == "recording") {
+            record.restartRecording();
+          }
+          break;
+        // case keys["up"]:
+        //   console.log('up');
+        //   if(recorder.state == "recording") {
+        //     record.playbackRecording();
+        //   }
+        //   break
         default:
       };
     });

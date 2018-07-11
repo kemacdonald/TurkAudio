@@ -30,8 +30,12 @@ router.get('/sentence_dict', jsonParser, function(req, res) {
   app.state.eval_keys = eval_keys_sample;
   app.state.n_trials = parseInt(app.config.n_eval_trials) + parseInt(app.config.n_training_trials);
   // build key list
-  app.state.key_list = app.state.training_keys + "," + app.state.eval_keys;
-  app.state.key_list = app.state.key_list.split(",")
+  if (parseInt(app.config.n_training_trials) == 0) {
+    app.state.key_list = app.state.eval_keys;
+  } else {
+    app.state.key_list = app.state.training_keys + "," + app.state.eval_keys;
+    app.state.key_list = app.state.key_list.split(",")
+  }
   app.state.key_list = _.shuffle(app.state.key_list)
   // build sentence dictionary
   var curr_sentence_dict = {}

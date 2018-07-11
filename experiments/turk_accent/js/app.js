@@ -2,8 +2,8 @@
 var $ = require('jquery')
 
 var app = {
-  config: {n_eval_trials: 5,
-    n_training_trials: 5,
+  config: {n_eval_trials: 10,
+    n_training_trials: 0,
   },
   state: {
     n_trials: "",
