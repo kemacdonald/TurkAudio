@@ -15,6 +15,11 @@ var ajax = require('./ajax'),
 // load the app using a callback so it loads after app is configured
 $(document).ready(function(){
   ajax.configure_app(app, function() {
+    if(_.isEmpty(turk.hitId)) {
+      app.state.hit_id = "hitId"
+    } else {
+      app.state.hit_id  = turk.hitId;
+    }
     DetectRTC.load(exp.onRTCready(app, turk));
     control.showSlide("introduction");
   });

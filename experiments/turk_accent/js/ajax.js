@@ -63,8 +63,8 @@ function get_training_keys_ajax(app) {
 };
 
 // request to create the directory to store audio file uploads
-function create_upload_dir_ajax(turk_id) {
-  var dir_name = "turker" + "_" + turk_id;
+function create_upload_dir_ajax(turk_worker_id, turk_hit_id) {
+  var dir_name = turk_hit_id + "/turker" + "_" + turk_worker_id;
   $.ajax({
     dataType: "json",
     type: "POST",
@@ -84,7 +84,7 @@ function upload_audio_ajax(formData) {
     processData: false,
     contentType: false,
     success: function(response) {
-      console.log('Successfully uploaded audio file.');
+      console.log('Successfully uploaded audio file (client side)');
     },
     error: function(jqXHR, textStatus, errorMessage) {
       alert('Error:' + JSON.stringify(errorMessage));

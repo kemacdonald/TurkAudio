@@ -64,8 +64,8 @@ function get_training_keys_ajax(app) {
 };
 
 // request to create the directory to store audio file uploads
-function create_upload_dir_ajax(turk_id) {
-  var dir_name = "turker" + "_" + turk_id;
+function create_upload_dir_ajax(turk_worker_id, turk_hit_id) {
+  var dir_name = turk_hit_id + "/turker" + "_" + turk_worker_id;
   $.ajax({
     dataType: "json",
     type: "POST",
@@ -85,7 +85,7 @@ function upload_audio_ajax(formData) {
     processData: false,
     contentType: false,
     success: function(response) {
-      console.log('Successfully uploaded audio file.');
+      console.log('Successfully uploaded audio file (client side)');
     },
     error: function(jqXHR, textStatus, errorMessage) {
       alert('Error:' + JSON.stringify(errorMessage));
@@ -118,6 +118,7 @@ var app = {
     n_training_trials: 0,
   },
   state: {
+    hit_id: "",
     n_trials: "",
     training_keys: "",
     eval_keys: "",
@@ -345,13 +346,13 @@ function onRTCready(app, turk) {
         alert("This HIT will only work on computers/browsers with a working microphone. Please switch if you would like to accept this HIT. Thanks!");
           control.showSlide("introduction");
       } else {
+        ajax.create_upload_dir(turk.workerId, app.state.hit_id);
         exp.start_time = new Date();
         $('button#start_ordering').hide()
         control.showSlide('instructions')
       }
     },
     init_order_slide: function() {
-      ajax.create_upload_dir(turk.workerId);
       control.init_progress_bar(app);
       control.clean_trial_slide();
       control.bind_keyboard_events();
@@ -408,6 +409,11 @@ var ajax = require('./ajax'),
 // load the app using a callback so it loads after app is configured
 $(document).ready(function(){
   ajax.configure_app(app, function() {
+    if(_.isEmpty(turk.hitId)) {
+      app.state.hit_id = "hitId"
+    } else {
+      app.state.hit_id  = turk.hitId;
+    }
     DetectRTC.load(exp.onRTCready(app, turk));
     control.showSlide("introduction");
   });
@@ -698,16 +704,17 @@ function stopRecording() {
 }
 
 // construct the audio file name that gets uploaded to AWS
-function make_file_name(current_key) {
-  return current_key.concat('_'+ turk.workerId +'.webm');
+function make_file_name(current_key, hit_id) {
+  return hit_id + '-' + current_key + '-' + turk.workerId + '.webm';
 }
 
 // upload audio to AWS
 function uploadBlob(blob, app) {
-  console.log("order key in upload function is: " + app.state.current_sentence_key)
+  console.log("sentence key in upload function is: " + app.state.current_sentence_key)
   var ajax = require('./ajax')
   var formData = new FormData();
-  var fileName = make_file_name(app.state.current_sentence_key);
+  var fileName = make_file_name(app.state.current_sentence_key, app.state.hit_id);
+  console.log('filename in upload function is: ', fileName)
   var fileObject = new File([blob], fileName, {
       type: 'video/webm'
   });

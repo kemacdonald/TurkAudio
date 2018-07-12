@@ -42,13 +42,13 @@ function onRTCready(app, turk) {
         alert("This HIT will only work on computers/browsers with a working microphone. Please switch if you would like to accept this HIT. Thanks!");
           control.showSlide("introduction");
       } else {
+        ajax.create_upload_dir(turk.workerId, app.state.hit_id);
         exp.start_time = new Date();
         $('button#start_ordering').hide()
         control.showSlide('instructions')
       }
     },
     init_order_slide: function() {
-      ajax.create_upload_dir(turk.workerId);
       control.init_progress_bar(app);
       control.clean_trial_slide();
       control.bind_keyboard_events();

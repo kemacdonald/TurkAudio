@@ -80,16 +80,17 @@ function stopRecording() {
 }
 
 // construct the audio file name that gets uploaded to AWS
-function make_file_name(current_key) {
-  return current_key.concat('_'+ turk.workerId +'.webm');
+function make_file_name(current_key, hit_id) {
+  return hit_id + '-' + current_key + '-' + turk.workerId + '.webm';
 }
 
 // upload audio to AWS
 function uploadBlob(blob, app) {
-  console.log("order key in upload function is: " + app.state.current_sentence_key)
+  console.log("sentence key in upload function is: " + app.state.current_sentence_key)
   var ajax = require('./ajax')
   var formData = new FormData();
-  var fileName = make_file_name(app.state.current_sentence_key);
+  var fileName = make_file_name(app.state.current_sentence_key, app.state.hit_id);
+  console.log('filename in upload function is: ', fileName)
   var fileObject = new File([blob], fileName, {
       type: 'video/webm'
   });

@@ -6,6 +6,7 @@ var app = {
     n_training_trials: 0,
   },
   state: {
+    hit_id: "",
     n_trials: "",
     training_keys: "",
     eval_keys: "",
