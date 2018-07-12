@@ -77,14 +77,46 @@ router.post('/endpoint', function(req, res){
   form.maxFieldsSize = 10 * 1024 * 1024;
   form.maxFields = 1000;
   form.multiples = false;
-  // parse data
-  form.parse(req);
-  // save to server
-  form.on('fileBegin', function(name, file) {
-    var person_dir = 'turker_' + file.name.split('_')[1].replace('.webm', '') + "/"
-    file.path = './uploads/' + person_dir + file.name;
-    res.end();
+
+  form.on('fileBegin', function(field, file) {
+    console.log('the file name is: ', file.name)
+    var hit_id = file.name.split('-')[0];
+    var sentence_key = file.name.split('-')[1];
+    var worker_id = file.name.split('-')[2].replace('.webm', '');
+    var person_dir = 'turker_' + worker_id + '/';
+    var file_name = sentence_key + "_" + worker_id + '.webm'
+    console.log('the hit_id is: ', hit_id)
+    console.log('the worker_id is: ', worker_id)
+    console.log('the file_name is: ', file_name)
+    console.log('the person_dir is: ', person_dir)
+    file.path = path.join('uploads', hit_id, person_dir, file_name)
+    console.log('the final upload path is: ', file.path)
   });
+
+  // log any errors that occur
+  form.on('error', function(err) {
+    console.log('An error has occured: \n' + err);
+  });
+
+  // parse data
+  form.parse(req)
+
+  form.on('end', function(){
+    res.end('successfully uploaded audio file');
+  })
+  // // save to server
+  // form.on('file', function(name, file) {
+  //   console.log('the name is: ', name)
+  //   console.log("the file is: ", file)
+  //   console.log("the file.name is: ", file.name)
+  //   var hit_id = file.name.split('/')[0]
+  //   var worker_id = file.name.split('_')[1].replace('.webm', '')
+  //   var file_name = file.name.split('/')[1]
+  //   var person_dir = 'turker_' + worker_id + '/'
+  //   file.path = path.join('uploads', hit_id, person_dir, file_name) // this path call is causing the issue
+  //   console.log("the audio file path is: ", file.path)
+  //   res.end();
+  // });
 })
 
 // //handle post request when user finishes the task
