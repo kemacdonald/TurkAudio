@@ -2,19 +2,21 @@
 var $ = require('jquery')
 
 var app = {
-  config: {n_eval_trials: 10,
-    n_training_trials: 40,
-    experiment_type: "accent"
+  config: {
+    experiment_type: "orders",
+    n_orders_in_list: 50,
+    n_orders_list_min: 20,
+    n_orders_list_max: 80
   },
   state: {
     hit_id: "",
+    order_number: "",
+    person_key: "",
+    list_number: "",
     n_trials: "",
-    training_keys: "",
-    eval_keys: "",
-    sentence_dict: "",
     key_list: "",
+    sentence_dict: "",
     current_sentence_key: "",
-    current_sentence_key_type: ""
   },
   ip: ""
 }

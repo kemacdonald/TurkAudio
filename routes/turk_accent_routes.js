@@ -9,9 +9,8 @@ var express = require('express'),
   formidable = require('formidable'),
   path = require('path'),
   util = require('util'),
-  router = express.Router()
-
-var jsonParser = bodyParser.json()
+  router = express.Router(),
+  jsonParser = bodyParser.json()
 
 router.get('/sentence_dict', jsonParser, function(req, res) {
   var app = req.query;
@@ -51,24 +50,21 @@ router.post('/make_dir', jsonParser, function(req, res) {
   var dir_path = path.join('uploads', req.body['dir_name']);
   mkdirp(dir_path, function(err) {
     if (err) console.error(err)
-      else console.log('created upload directory at: ' + dir_path)
+    else console.log('created upload directory at: ' + dir_path)
   });
 })
 
-router.post('/remove_list_number', jsonParser, function (req, res) {
-  console.log('removing list number from orders dict')
-  if (!req.body) return res.sendStatus(400)
-  var list_number = req.body['list_number'];
-  var order_list_generator_path = path.join('experiments', 'turk_accent', 'order_list_generator.json');
-  var old_order_dict = JSON.parse(fs.readFileSync(order_list_generator_path, 'utf8'));
-  var new_order_array = _.filter(old_order_dict["list_number_generator"], function(num){ return num != list_number; })
-  old_order_dict["list_number_generator"] = new_order_array;
-  var new_json =  JSON.stringify(old_order_dict);
-  // rewrite order object to disk removing the current participants list number from the pool
-  fs.writeFile(order_list_generator_path, new_json, 'utf8', function (err) {
-       if (err) {return console.log(err);} console.log("The updated order generator was saved");
-   });
-});
+function isDirSync(aPath) {
+  try {
+    return fs.statSync(aPath).isDirectory();
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      return false;
+    } else {
+      throw e;
+    }
+  }
+}
 
 // handle post request when user uploads audio files
 router.post('/endpoint', function(req, res){
@@ -79,44 +75,35 @@ router.post('/endpoint', function(req, res){
   form.multiples = false;
 
   form.on('fileBegin', function(field, file) {
-    console.log('the file name is: ', file.name)
-    var hit_id = file.name.split('-')[0];
-    var sentence_key = file.name.split('-')[1];
-    var worker_id = file.name.split('-')[2].replace('.webm', '');
-    var person_dir = 'turker_' + worker_id + '/';
-    var file_name = sentence_key + "_" + worker_id + '.webm'
+    console.log('------------------------------');
+    console.log('the file name sent from the user is: ', file.name)
+    var file_name_split = file.name.split('-'),
+      hit_id = file_name_split[0],
+      sentence_key = file_name_split[1],
+      worker_id = file_name_split[2].replace('.webm', ''),
+      person_dir = 'turker_' + worker_id + '/',
+      file_name = sentence_key + "_" + worker_id + '.webm',
+      upload_dir_path = path.join('uploads', hit_id, person_dir);
+    // check if upload directory exists, and if not create it
+    console.log('the directory ' + upload_dir_path + ' exists:', isDirSync(upload_dir_path));
+    if (!isDirSync(upload_dir_path)) {
+      console.log(upload_dir_path + ' did not exist, creating now')
+      fs.mkdirSync(upload_dir_path);
+    }
+    // log pieces of upload path to see where things go wrong
+    console.log('the sentence_key is: ', sentence_key);
     console.log('the hit_id is: ', hit_id)
     console.log('the worker_id is: ', worker_id)
-    console.log('the file_name is: ', file_name)
+    console.log('the file_name for the audio upload path is: ', file_name)
     console.log('the person_dir is: ', person_dir)
+    // set the upload path for the file
     file.path = path.join('uploads', hit_id, person_dir, file_name)
     console.log('the final upload path is: ', file.path)
   });
 
-  // log any errors that occur
-  form.on('error', function(err) {
-    console.log('An error has occured: \n' + err);
-  });
-
-  // parse data
+  form.on('error', function(err) {console.log('An error has occured: \n' + err);});
   form.parse(req)
-
-  form.on('end', function(){
-    res.end('successfully uploaded audio file');
-  })
-  // // save to server
-  // form.on('file', function(name, file) {
-  //   console.log('the name is: ', name)
-  //   console.log("the file is: ", file)
-  //   console.log("the file.name is: ", file.name)
-  //   var hit_id = file.name.split('/')[0]
-  //   var worker_id = file.name.split('_')[1].replace('.webm', '')
-  //   var file_name = file.name.split('/')[1]
-  //   var person_dir = 'turker_' + worker_id + '/'
-  //   file.path = path.join('uploads', hit_id, person_dir, file_name) // this path call is causing the issue
-  //   console.log("the audio file path is: ", file.path)
-  //   res.end();
-  // });
+  form.on('end', function(){res.end('successfully uploaded audio file');})
 })
 
 // //handle post request when user finishes the task

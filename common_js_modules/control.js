@@ -1,0 +1,168 @@
+// MODULE WITH HELPERS FOR CONTROLLING FLOW OF THE EXPERIMENT
+var record = require('./recording.js')
+
+// get and play example audio of an order
+function play_example_audio() {
+  audio = $('#example_audio')
+  audio.attr('src', "media/example_order.webm");
+  audio.trigger('play')
+  audio.on('ended', function() {
+    $('button#start_ordering').show()
+  });
+}
+
+// return a random number
+function random(a,b) {
+  if(_.isUndefined(b)) {
+    a = a || 2;
+    return Math.floor(Math.random() * a);
+  } else {
+    return Math.floor(Math.random() * (b-a+1)) + a
+  }
+}
+
+// show slide function
+function showSlide(id) {
+  $(".slide").hide();
+  $("#"+id).show();
+}
+
+// stops audio from prior trial and shows progress bar
+function clean_trial_slide() {
+  $('#example_audio').trigger('pause');
+  $(".progress").attr("style", "visibility: visible");
+}
+
+// bind start and stop recording to keyboard events
+function bind_keyboard_events() {
+  $(document).keyup(function(event) {
+      var keys = {"left": 37, "right": 39, "down": 40, "up": 38};
+       switch(event.which) {
+        case keys["left"]:
+          record.startRecording();
+          break;
+        case keys["right"]:
+          if(recorder.state !== "inactive") {
+            record.stopRecording();
+          }
+          break;
+        case keys["down"]:
+          if(recorder.state == "recording") {
+            record.restartRecording();
+          }
+          break;
+        // case keys["up"]:
+        //   console.log('up');
+        //   if(recorder.state == "recording") {
+        //     record.playbackRecording();
+        //   }
+        //   break
+        default:
+      };
+    });
+}
+
+function unbind_keyboard_events() {
+  console.log("unbinding keyboard events")
+  $(document).off( "keyup")
+}
+
+// builds the order based on the order key and the order instructions
+function init_order(app) {
+  increment_progress_bar(app)
+  app.state.current_sentence_key = get_next_order(app);
+  console.log("current order key is: " + app.state.current_sentence_key)
+  if (!_.isUndefined(app.state.current_sentence_key)){advance_exp(app)};
+}
+
+// advances the experiment
+function advance_exp(app) {
+  var delay = 1000
+  setTimeout(function(){
+    build_prompt(app);
+  }, delay);
+}
+
+function increment_progress_bar(app) {
+  if(app.state.key_list.length < app.state.n_trials) {
+    $(".progress").progressbar("option", "value",($(".progress").progressbar( "option", "value")+1));
+  }
+}
+
+// extracts the order list number from the order key
+function get_list_number(order_key) {
+  return order_key.substring(0,8).replace("_", "");
+}
+
+// gets the next order key from the list of order_keys
+function get_next_order(app) {
+  // if order keys is empty, we are done and end the experiment
+  if( _.isEmpty(app.state.key_list) ) {
+    setTimeout(function(){exp.init_final_slide();}, 1000); // add some delay before showing final slide
+  } else {
+    return app.state.key_list.shift();
+  }
+}
+
+// builds the html for each order that will be displayed to the user
+function build_prompt(app) {
+  // remove the order upload text
+  $("#upload_text").html("");
+  // check which kind of app
+  switch(app.config.experiment_type) {
+    case "accent":
+      var sentence = app.state.sentence_dict[app.state.current_sentence_key].sentence
+      $(`#sentence_text`).html('<p class="block-text">' + sentence + '</p>');
+      break;
+    case "orders":
+      var order = app.state.sentence_dict[app.state.current_sentence_key];
+      var item_table_html = build_item_table(order);
+      $(`#items_table`).html(item_table_html);
+      break;
+  }
+}
+
+
+// cleans up the html for a single item in the order
+function get_item_html(item) {
+  var item_html = item.replace('Please order ', '');           // remove "please" text
+  item_html = item_html.replace(/(\r\n|\n|\r)/gm, "<br><br>"); // add line breaks
+  return item_html;
+}
+
+// builds the item table html
+function build_item_table(order) {
+  var n_cols = order.instructions.length, table_html = '<table id="items_table" border="1"><tr>';
+  for (col = 0; col < n_cols; col++) {
+    var item_html = get_item_html(order.instructions[col]);
+    if (col == 0) {
+      table_html = table_html.concat('<td>'+item_html+'</td>');
+    } else {
+      table_html = table_html.concat('<td>'+item_html+'</td>');
+    };
+  };
+  table_html = table_html.concat('</tr></table>');
+  return table_html
+}
+
+function init_progress_bar(app) {
+  $(".progress").progressbar();
+  $(".progress").progressbar( "option", "max", app.state.n_trials);
+}
+
+// export the module
+module.exports = {
+  random: random,
+  play_example_audio: play_example_audio,
+  showSlide: showSlide,
+  bind_keyboard_events: bind_keyboard_events,
+  unbind_keyboard_events: unbind_keyboard_events,
+  init_order: init_order,
+  get_list_number: get_list_number,
+  advance_exp: advance_exp,
+  get_next_order: get_next_order,
+  get_item_html: get_item_html,
+  build_item_table: build_item_table,
+  init_progress_bar: init_progress_bar,
+  clean_trial_slide: clean_trial_slide
+};

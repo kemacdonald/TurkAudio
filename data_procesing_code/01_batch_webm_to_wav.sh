@@ -3,13 +3,15 @@
 # puts the wav files in a separate directory
 
 hit_id=3CZH926SIDLZ8JXWQDR70FKZV6G4EK
-
+hit_key=${hit_id:0:5}
+echo $hit_key
 cd ../raw_audio
-mkdir -p wav_batch/$hit_id
-cd webm_batch/$hit_id
+mkdir -p 01_wav_batch/$hit_id
+cd 00_webm_batch/$hit_id
 
 for file in turker*/*; do
   check_file=${file%.webm}
+  break
   #echo ../../wav_batch/$hit_id/$check_file.wav
   if [ ! -f ../../wav_batch/$hit_id/$check_file.wav ]; then
     dirname=$hit_id/"$(echo $file | cut -d/ -f -1)"

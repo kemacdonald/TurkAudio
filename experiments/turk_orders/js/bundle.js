@@ -267,10 +267,9 @@ function get_item_html(item) {
 
 // builds the item table html
 function build_item_table(order) {
-  console.log(order)
-  var n_cols = order.length, table_html = '<table id="items_table" border="1"><tr>';
+  var n_cols = order.instructions.length, table_html = '<table id="items_table" border="1"><tr>';
   for (col = 0; col < n_cols; col++) {
-    var item_html = get_item_html(order[col]);
+    var item_html = get_item_html(order.instructions[col]);
     if (col == 0) {
       table_html = table_html.concat('<td>'+item_html+'</td>');
     } else {
@@ -622,19 +621,21 @@ module.exports = {
 var $ = require('jquery')
 
 var app = {
-  config: {n_eval_trials: 10,
-    n_training_trials: 40,
-    experiment_type: "accent"
+  config: {
+    experiment_type: "orders",
+    n_orders_in_list: 50,
+    n_orders_list_min: 20,
+    n_orders_list_max: 80
   },
   state: {
     hit_id: "",
+    order_number: "",
+    person_key: "",
+    list_number: "",
     n_trials: "",
-    training_keys: "",
-    eval_keys: "",
-    sentence_dict: "",
     key_list: "",
+    sentence_dict: "",
     current_sentence_key: "",
-    current_sentence_key_type: ""
   },
   ip: ""
 }
@@ -752,7 +753,7 @@ var ajax = require('../../../common_js_modules/ajax'),
 // wrap the app config code in document.ready
 // load the app using a callback so it loads after app is configured
 $(document).ready(function(){
-  ajax.configure_accent_app(app, function() {
+  ajax.configure_orders_app(app, function() {
     if(_.isEmpty(turk.hitId)) {
       app.state.hit_id = "hitId"
     } else {

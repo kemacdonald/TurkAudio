@@ -14,7 +14,7 @@ var ajax = require('../../../common_js_modules/ajax'),
 // wrap the app config code in document.ready
 // load the app using a callback so it loads after app is configured
 $(document).ready(function(){
-  ajax.configure_accent_app(app, function() {
+  ajax.configure_orders_app(app, function() {
     if(_.isEmpty(turk.hitId)) {
       app.state.hit_id = "hitId"
     } else {
